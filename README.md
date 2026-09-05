@@ -42,6 +42,14 @@
 
 </div>
 
+> [!IMPORTANT]
+> This repository is an experimental fork of ApexNav that adds an optional
+> AVIC/SVC visual-imagination bridge. The integration is research code: the
+> current experiments validate the end-to-end interface, but do **not** yet
+> demonstrate an improvement over the original ApexNav baseline. See the
+> [AVIC integration guide](docs/AVIC_INTEGRATION.zh-CN.md) and
+> [current results](docs/CURRENT_RESULTS.zh-CN.md).
+
 ## 📢 News
 
 - **[27/04/2026]**: 🌟 A **lightweight version** is now available! Thanks to [TracyLucia](https://github.com/TracyLucia) for contributing the lightweight version. Check out the [Lite-Apexnav](https://github.com/Robotics-STAR-Lab/ApexNav/tree/Lite-Apexnav) branch.
@@ -252,6 +260,23 @@ Note that `train` and `val_mini` are not required and you can choose to delete t
 
 ## 🚀 Usage
 > All following commands should be run in the `apexnav` conda environment
+
+### One-command Run
+The helper starts all four VLM servers and ROS, runs Habitat evaluation, and
+cleans up its child processes on exit:
+```bash
+cp config/avic.env.example config/avic.env  # edit paths for your machine
+./scripts/run_apexnav.sh                         # HM3D-v2 episode 0
+./scripts/run_apexnav.sh --dataset mp3d --episode 10
+./scripts/run_apexnav.sh --dataset hm3dv2 --full
+./scripts/run_apexnav.sh --dataset hm3dv2 --avic-mode avic \
+  --episode-manifest experiments/manifests/hm3dv2_clear_targets_50_habitat.json
+```
+
+Generated logs, model outputs, videos, datasets, and checkpoints are excluded
+from Git. Use `--result-dir` or the `APEXNAV_OUTPUT_ROOT` environment variable
+to place them on suitable local storage.
+
 ### ROS Compilation
 ``` bash
 catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3
@@ -297,6 +322,14 @@ source ./devel/setup.bash
 
 python habitat_manual_control.py --dataset hm3dv1 # Default episode_id = 0
 python habitat_manual_control.py --dataset hm3dv1 test_epi_num=10 # episode_id = 10
+```
+
+### AVIC unit tests
+
+Run the lightweight bridge and policy tests in the ApexNav environment:
+
+```bash
+python -m unittest discover -s tests -v
 ```
 
 ### 🤖 Real-world Deployment Example

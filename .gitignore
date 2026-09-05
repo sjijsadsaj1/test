@@ -4,11 +4,21 @@ data
 outputs
 videos
 
+# Local experiment output. Keep reproducible manifests and documentation under
+# experiments/, but never commit generated media, logs, or run directories.
+logs/
+experiments/runs/
+experiments/**/results/
+experiments/avic_bridge/runs/
+
 __pycache__/
+*.py[cod]
 *.egg-info
 
 build
 devel
+build_*/
+devel_*/
 lockfiles
 
 .catkin_workspace
@@ -18,6 +28,25 @@ yolov7
 traced_model.pt
 GroundingDINO
 habitat-lab
+
+# Model checkpoints and large generated artifacts belong in external storage.
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.npz
+*.npy
+*.mp4
+*.bag
+*.log
+*.pid
+
+# Machine-local runtime configuration. The example is safe to commit.
+config/avic.env
+.env
+.env.*
+!.env.example
 
 # src/planner/utils/lkh_mtsp_solver/LKH/LKH
 # src/planner/utils/lkh_mtsp_solver/LKH/SRC/OBJ/*.o
