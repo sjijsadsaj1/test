@@ -1,0 +1,435 @@
+{
+  "name": "hm3dv2_clear_targets_50_habitat",
+  "dataset": "hm3dv2",
+  "split": "val",
+  "selection_version": 2,
+  "criteria": {
+    "object_categories": [
+      "tv_monitor",
+      "sofa",
+      "bed"
+    ],
+    "category_quotas": {
+      "tv_monitor": 20,
+      "sofa": 15,
+      "bed": 15
+    },
+    "geodesic_distance_m": {
+      "minimum": 4.0,
+      "maximum": 10.0
+    },
+    "distance_metadata_note": "episode distance fields are display-only and accurate to 0.001 m; the source dataset is authoritative",
+    "scene_coverage": "all 36 HM3Dv2 validation scenes",
+    "exclusions": [
+      "chair and plant: target-room semantics are weak or ubiquitous",
+      "toilet: usually hidden too deeply for short-horizon visual imagination",
+      "episodes shorter than 4 m or longer than 10 m"
+    ],
+    "within_scene_ranking": "prefer approximately 7 m geodesic paths and non-trivial geodesic/euclidean path ratios"
+  },
+  "episodes": [
+    {
+      "scene_key": "4ok3usBNeis",
+      "episode_id": "10",
+      "object_category": "sofa",
+      "geodesic_distance": 7.32278,
+      "euclidean_distance": 6.00491,
+      "source_episode_id": "5"
+    },
+    {
+      "scene_key": "4ok3usBNeis",
+      "episode_id": "18",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 7.64829,
+      "euclidean_distance": 6.93704,
+      "source_episode_id": "5"
+    },
+    {
+      "scene_key": "5cdEh9F2hJL",
+      "episode_id": "1",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 7.08824,
+      "euclidean_distance": 6.23462,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "5cdEh9F2hJL",
+      "episode_id": "27",
+      "object_category": "bed",
+      "geodesic_distance": 6.55513,
+      "euclidean_distance": 5.59378,
+      "source_episode_id": "3"
+    },
+    {
+      "scene_key": "6s7QHgap2fW",
+      "episode_id": "7",
+      "object_category": "bed",
+      "geodesic_distance": 7.73337,
+      "euclidean_distance": 6.65547,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "7MXmsvcQjpJ",
+      "episode_id": "25",
+      "object_category": "sofa",
+      "geodesic_distance": 7.25888,
+      "euclidean_distance": 5.85004,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "BAbdmeyTvMZ",
+      "episode_id": "7",
+      "object_category": "sofa",
+      "geodesic_distance": 7.11239,
+      "euclidean_distance": 4.92372,
+      "source_episode_id": "0"
+    },
+    {
+      "scene_key": "CrMo8WxCyVb",
+      "episode_id": "13",
+      "object_category": "sofa",
+      "geodesic_distance": 6.59392,
+      "euclidean_distance": 5.93178,
+      "source_episode_id": "2"
+    },
+    {
+      "scene_key": "DYehNKdT76V",
+      "episode_id": "13",
+      "object_category": "sofa",
+      "geodesic_distance": 6.59802,
+      "euclidean_distance": 3.44861,
+      "source_episode_id": "3"
+    },
+    {
+      "scene_key": "DYehNKdT76V",
+      "episode_id": "26",
+      "object_category": "bed",
+      "geodesic_distance": 7.62354,
+      "euclidean_distance": 3.85796,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "Dd4bFSTQ8gi",
+      "episode_id": "20",
+      "object_category": "bed",
+      "geodesic_distance": 8.14274,
+      "euclidean_distance": 7.37657,
+      "source_episode_id": "0"
+    },
+    {
+      "scene_key": "GLAQ4DNUx5U",
+      "episode_id": "3",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 6.31533,
+      "euclidean_distance": 5.90418,
+      "source_episode_id": "0"
+    },
+    {
+      "scene_key": "HY1NcmCgn3n",
+      "episode_id": "16",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 7.91525,
+      "euclidean_distance": 4.4433,
+      "source_episode_id": "7"
+    },
+    {
+      "scene_key": "LT9Jq6dN3Ea",
+      "episode_id": "16",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 6.38778,
+      "euclidean_distance": 4.28801,
+      "source_episode_id": "3"
+    },
+    {
+      "scene_key": "LT9Jq6dN3Ea",
+      "episode_id": "13",
+      "object_category": "sofa",
+      "geodesic_distance": 8.10882,
+      "euclidean_distance": 3.12356,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "MHPLjHsuG27",
+      "episode_id": "24",
+      "object_category": "bed",
+      "geodesic_distance": 7.38532,
+      "euclidean_distance": 6.45041,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "MHPLjHsuG27",
+      "episode_id": "17",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 7.00319,
+      "euclidean_distance": 5.5221,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "Nfvxx8J5NCo",
+      "episode_id": "4",
+      "object_category": "sofa",
+      "geodesic_distance": 7.11052,
+      "euclidean_distance": 5.18558,
+      "source_episode_id": "5"
+    },
+    {
+      "scene_key": "Nfvxx8J5NCo",
+      "episode_id": "13",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 9.08815,
+      "euclidean_distance": 2.94113,
+      "source_episode_id": "0"
+    },
+    {
+      "scene_key": "QaLdnwvtxbs",
+      "episode_id": "18",
+      "object_category": "sofa",
+      "geodesic_distance": 7.10658,
+      "euclidean_distance": 4.82926,
+      "source_episode_id": "2"
+    },
+    {
+      "scene_key": "QaLdnwvtxbs",
+      "episode_id": "17",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 5.92444,
+      "euclidean_distance": 4.62267,
+      "source_episode_id": "4"
+    },
+    {
+      "scene_key": "TEEsavR23oF",
+      "episode_id": "10",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 7.18341,
+      "euclidean_distance": 4.423,
+      "source_episode_id": "3"
+    },
+    {
+      "scene_key": "VBzV5z6i1WS",
+      "episode_id": "5",
+      "object_category": "bed",
+      "geodesic_distance": 7.16176,
+      "euclidean_distance": 6.7661,
+      "source_episode_id": "4"
+    },
+    {
+      "scene_key": "XB4GS9ShBRE",
+      "episode_id": "20",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 4.37266,
+      "euclidean_distance": 3.32672,
+      "source_episode_id": "0"
+    },
+    {
+      "scene_key": "a8BtkwhxdRV",
+      "episode_id": "18",
+      "object_category": "bed",
+      "geodesic_distance": 7.48031,
+      "euclidean_distance": 6.83869,
+      "source_episode_id": "2"
+    },
+    {
+      "scene_key": "bCPU9suPUw9",
+      "episode_id": "21",
+      "object_category": "sofa",
+      "geodesic_distance": 8.09978,
+      "euclidean_distance": 6.90087,
+      "source_episode_id": "2"
+    },
+    {
+      "scene_key": "bxsVRursffK",
+      "episode_id": "2",
+      "object_category": "bed",
+      "geodesic_distance": 4.19596,
+      "euclidean_distance": 3.64099,
+      "source_episode_id": "0"
+    },
+    {
+      "scene_key": "cvZr5TUy5C5",
+      "episode_id": "7",
+      "object_category": "sofa",
+      "geodesic_distance": 5.5934,
+      "euclidean_distance": 2.40658,
+      "source_episode_id": "3"
+    },
+    {
+      "scene_key": "eF36g7L6Z9M",
+      "episode_id": "1",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 7.23622,
+      "euclidean_distance": 6.00757,
+      "source_episode_id": "3"
+    },
+    {
+      "scene_key": "h1zeeAwLh9Z",
+      "episode_id": "5",
+      "object_category": "bed",
+      "geodesic_distance": 6.78116,
+      "euclidean_distance": 5.63529,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "h1zeeAwLh9Z",
+      "episode_id": "21",
+      "object_category": "sofa",
+      "geodesic_distance": 6.90552,
+      "euclidean_distance": 6.42731,
+      "source_episode_id": "3"
+    },
+    {
+      "scene_key": "k1cupFYWXJ6",
+      "episode_id": "3",
+      "object_category": "sofa",
+      "geodesic_distance": 6.57673,
+      "euclidean_distance": 6.13706,
+      "source_episode_id": "3"
+    },
+    {
+      "scene_key": "mL8ThkuaVTM",
+      "episode_id": "2",
+      "object_category": "bed",
+      "geodesic_distance": 6.92743,
+      "euclidean_distance": 5.85658,
+      "source_episode_id": "4"
+    },
+    {
+      "scene_key": "mv2HUxq3B53",
+      "episode_id": "26",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 5.73783,
+      "euclidean_distance": 4.84148,
+      "source_episode_id": "0"
+    },
+    {
+      "scene_key": "p53SfW6mjZe",
+      "episode_id": "1",
+      "object_category": "bed",
+      "geodesic_distance": 7.45798,
+      "euclidean_distance": 5.46262,
+      "source_episode_id": "5"
+    },
+    {
+      "scene_key": "p53SfW6mjZe",
+      "episode_id": "7",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 6.99225,
+      "euclidean_distance": 6.32837,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "q3zU7Yy5E5s",
+      "episode_id": "25",
+      "object_category": "sofa",
+      "geodesic_distance": 5.52298,
+      "euclidean_distance": 4.74965,
+      "source_episode_id": "4"
+    },
+    {
+      "scene_key": "q5QZSEeHe5g",
+      "episode_id": "1",
+      "object_category": "bed",
+      "geodesic_distance": 7.17065,
+      "euclidean_distance": 6.86436,
+      "source_episode_id": "0"
+    },
+    {
+      "scene_key": "q5QZSEeHe5g",
+      "episode_id": "13",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 8.48484,
+      "euclidean_distance": 4.7342,
+      "source_episode_id": "0"
+    },
+    {
+      "scene_key": "qyAac8rV8Zk",
+      "episode_id": "4",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 4.80471,
+      "euclidean_distance": 4.08322,
+      "source_episode_id": "2"
+    },
+    {
+      "scene_key": "svBbv1Pavdk",
+      "episode_id": "15",
+      "object_category": "bed",
+      "geodesic_distance": 5.54636,
+      "euclidean_distance": 2.32053,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "svBbv1Pavdk",
+      "episode_id": "10",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 7.12521,
+      "euclidean_distance": 4.14634,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "wcojb4TFT35",
+      "episode_id": "22",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 8.01384,
+      "euclidean_distance": 7.32781,
+      "source_episode_id": "4"
+    },
+    {
+      "scene_key": "y9hTuugGdiq",
+      "episode_id": "2",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 6.76306,
+      "euclidean_distance": 5.55456,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "y9hTuugGdiq",
+      "episode_id": "14",
+      "object_category": "bed",
+      "geodesic_distance": 6.78145,
+      "euclidean_distance": 6.39822,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "yr17PDCnDDW",
+      "episode_id": "22",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 5.45821,
+      "euclidean_distance": 4.95078,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "ziup5kvtCCR",
+      "episode_id": "5",
+      "object_category": "bed",
+      "geodesic_distance": 6.59066,
+      "euclidean_distance": 4.27837,
+      "source_episode_id": "2"
+    },
+    {
+      "scene_key": "ziup5kvtCCR",
+      "episode_id": "10",
+      "object_category": "sofa",
+      "geodesic_distance": 6.50377,
+      "euclidean_distance": 3.0647,
+      "source_episode_id": "1"
+    },
+    {
+      "scene_key": "zt1RVoi7PcG",
+      "episode_id": "13",
+      "object_category": "sofa",
+      "geodesic_distance": 6.19354,
+      "euclidean_distance": 3.1299,
+      "source_episode_id": "0"
+    },
+    {
+      "scene_key": "zt1RVoi7PcG",
+      "episode_id": "11",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 6.67227,
+      "euclidean_distance": 5.2104,
+      "source_episode_id": "4"
+    }
+  ],
+  "episode_id_namespace": "habitat_0.3.1_runtime_per_scene_index",
+  "source_manifest": "HM3D v2 ObjectNav validation split",
+  "runtime_id_note": "Episode IDs were remapped for Habitat 0.3.1; use this manifest rather than the original dataset IDs"
+}

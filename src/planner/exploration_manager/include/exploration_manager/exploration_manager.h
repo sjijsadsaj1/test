@@ -42,6 +42,10 @@ struct ExplorationData;
 struct SemanticFrontier {
   Vector2d position;      ///< 2D position of the frontier
   double semantic_value;  ///< Semantic value at the frontier location
+  double real_semantic_value{0.0};  ///< Immutable value read from Semantic Score Map
+  double observation_evidence{0.0}; ///< Real-observation coverage, never updated by imagination
+  double imagined_semantic_value{0.0}; ///< BLIP-2 score of an imagined future view
+  bool score_augmented{false};       ///< Whether semantic_value is decision-only
   double path_length;     ///< Path length to reach this frontier
   vector<Vector2d> path;  ///< Complete path to the frontier
 
@@ -54,6 +58,13 @@ struct SemanticFrontier {
     // Otherwise, sort by semantic value (descending)
     return semantic_value > other.semantic_value;
   }
+};
+
+struct TemporaryFrontierScore {
+  Vector2d position{Vector2d::Zero()};
+  double real_semantic_value{0.0};
+  double imagined_semantic_value{0.0};
+  double decision_semantic_value{0.0};
 };
 
 enum EXPL_RESULT {
@@ -74,11 +85,16 @@ public:
   void initialize(ros::NodeHandle& nh);
 
   int planNextBestPoint(const Vector3d& pos, const double& yaw);
+  int planNextBestPointWithTemporaryScores(const Vector3d& pos, const double& yaw,
+      const vector<TemporaryFrontierScore>& scores, double match_tolerance,
+      int& matched_score_count);
   bool planTrajectory(const Eigen::VectorXd& start, const Eigen::VectorXd& end, const Vector3d& ctrl);
   void getSortedSemanticFrontiers(const Vector2d& cur_pos, const vector<Vector2d>& frontiers,
       vector<SemanticFrontier>& sem_frontiers);
   void calcSemanticFrontierInfo(const vector<SemanticFrontier>& sem_frontiers, double& std_dev,
       double& max_to_mean, double& mean, bool if_print = false);
+  bool selectReachableFrontier(const Vector2d& cur_pos, const Vector2d& requested_pos,
+      double match_tolerance, Vector2d& selected_pos, vector<Vector2d>& selected_path);
 
   shared_ptr<ExplorationData> ed_;            ///< Exploration data container
   shared_ptr<ExplorationParam> ep_;           ///< Exploration parameters
@@ -132,6 +148,10 @@ private:
 
   ros::ServiceClient tsp_client_;         ///< ROS service client for TSP solver
   unique_ptr<RayCaster2D> ray_caster2d_;  ///< Ray casting for collision checking
+  vector<TemporaryFrontierScore> temporary_frontier_scores_;
+  double temporary_score_match_tolerance_{0.75};
+  bool temporary_scores_active_{false};
+  int temporary_score_match_count_{0};
 };
 
 inline bool ExplorationManager::searchFrontierPath(const Vector2d& start, const Vector2d& end,

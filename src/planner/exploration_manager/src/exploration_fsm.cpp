@@ -4,6 +4,10 @@
 #include <exploration_manager/exploration_data.h>
 #include <vis_utils/planning_visualization.h>
 
+#include <chrono>
+#include <cmath>
+#include <sstream>
+
 namespace apexnav_planner {
 void ExplorationFSM::init(ros::NodeHandle& nh)
 {
@@ -16,6 +20,15 @@ void ExplorationFSM::init(ros::NodeHandle& nh)
   expl_manager_->initialize(nh);
   visualization_.reset(new PlanningVisualization(nh));
   fp_->vis_scale_ = expl_manager_->sdf_map_->getResolution() * FSMConstants::VIS_SCALE_FACTOR;
+  nh.param("exploration/avic_top_k", fp_->avic_top_k_, 3);
+  nh.param("exploration/avic_score_match_tolerance", fp_->avic_score_match_tolerance_, 0.10);
+  nh.param("exploration/avic_observation_evidence_threshold",
+      fp_->avic_observation_evidence_threshold_, 0.55);
+
+  frontier_query_id_ = 0;
+  frontier_query_active_ = false;
+  frontier_query_eligible_this_cycle_ = false;
+  have_last_frontier_target_ = false;
 
   state_ = ROS_STATE::INIT;
 
@@ -30,6 +43,10 @@ void ExplorationFSM::init(ros::NodeHandle& nh)
   odom_sub_ = nh.subscribe("/odom_world", 10, &ExplorationFSM::odometryCallback, this);
   habitat_state_sub_ =
       nh.subscribe("/habitat/state", 10, &ExplorationFSM::habitatStateCallback, this);
+  executed_action_sub_ =
+      nh.subscribe("/habitat/executed_action", 10, &ExplorationFSM::executedActionCallback, this);
+  avic_frontier_scores_sub_ = nh.subscribe("/apexnav/avic_frontier_scores", 10,
+      &ExplorationFSM::avicFrontierScoresCallback, this);
   confidence_threshold_sub_ = node_.subscribe(
       "/detector/confidence_threshold", 10, &ExplorationFSM::confidenceThresholdCallback, this);
 
@@ -38,6 +55,10 @@ void ExplorationFSM::init(ros::NodeHandle& nh)
   expl_state_pub_ = nh.advertise<std_msgs::Int32>("/ros/expl_state", 10);
   action_pub_ = nh.advertise<std_msgs::Int32>("/habitat/plan_action", 10);
   expl_result_pub_ = nh.advertise<std_msgs::Int32>("/ros/expl_result", 10);
+  frontier_candidates_pub_ =
+      nh.advertise<std_msgs::Float32MultiArray>("/apexnav/topk_frontiers", 10);
+  avic_frontier_ack_pub_ =
+      nh.advertise<std_msgs::Float32MultiArray>("/apexnav/avic_frontier_ack", 10);
   robot_marker_pub_ = nh.advertise<visualization_msgs::Marker>("/robot", 10);
 }
 
@@ -101,11 +122,27 @@ void ExplorationFSM::FSMCallback(const ros::TimerEvent& e)
         fd_->start_pt_ = fd_->odom_pos_;
         fd_->start_yaw_(0) = fd_->odom_yaw_;
 
-        auto t1 = ros::Time::now();
+        // Use a monotonic wall clock. ROS time can be simulated and therefore
+        // is not suitable for comparing planner latency across methods.
+        const auto t1 = std::chrono::steady_clock::now();
         fd_->final_result_ = callActionPlanner();
-        double call_action_planner_time = (ros::Time::now() - t1).toSec();
+        updateFrontierQueryState();
+        publishTopKFrontiers(
+            Eigen::Vector2d(fd_->start_pt_(0), fd_->start_pt_(1)), fd_->start_yaw_(0));
+        const double call_action_planner_time_ms =
+            std::chrono::duration<double, std::milli>(
+                std::chrono::steady_clock::now() - t1)
+                .count();
         ROS_INFO_THROTTLE(
-            10.0, "[Calculating Time] Planning process time = %.3f s", call_action_planner_time);
+            10.0, "[Calculating Time] Planning process time = %.3f s",
+            call_action_planner_time_ms / 1000.0);
+        ROS_INFO("[BENCH] component=apexnav_plan episode_seq=%llu decision_seq=%llu "
+                 "latency_ms=%.3f final_result=%d frontier_count=%zu",
+            static_cast<unsigned long long>(benchmark_episode_index_),
+            static_cast<unsigned long long>(benchmark_decision_index_),
+            call_action_planner_time_ms, fd_->final_result_,
+            expl_manager_->ed_->frontiers_.size());
+        ++benchmark_decision_index_;
 
         std_msgs::Int32 expl_state_msg;
         expl_state_msg.data = fd_->final_result_;
@@ -148,6 +185,7 @@ int ExplorationFSM::callActionPlanner()
   const double stucking_distance = FSMConstants::STUCKING_DISTANCE;
   const double reach_distance = FSMConstants::REACH_DISTANCE;
   const double soft_reach_distance = FSMConstants::SOFT_REACH_DISTANCE;
+  frontier_query_eligible_this_cycle_ = false;
 
   bool frontier_change_flag = updateFrontierAndObject();
 
@@ -351,7 +389,133 @@ int ExplorationFSM::callActionPlanner()
     fd_->newest_action_ =
         planNextBestAction(current_pos, current_yaw, expl_manager_->ed_->next_best_path_);
 
+  // Only a normal exploration-policy decision may open an AVIC query.  Early
+  // returns for object pursuit, collision/stuck recovery or termination retain
+  // exclusive ApexNav control.
+  frontier_query_eligible_this_cycle_ = final_res == FINAL_RESULT::EXPLORE;
   return final_res;
+}
+
+void ExplorationFSM::updateFrontierQueryState()
+{
+  frontier_query_active_ = false;
+  if (!frontier_query_eligible_this_cycle_ || fd_->final_result_ != FINAL_RESULT::EXPLORE ||
+      expl_manager_->ed_->next_best_path_.empty())
+    return;
+
+  const Vector2d selected = expl_manager_->ed_->next_pos_;
+  const bool changed = !have_last_frontier_target_ ||
+      (selected - last_frontier_target_).norm() > 0.10;
+  if (!changed)
+    return;
+
+  ++frontier_query_id_;
+  frontier_query_active_ = true;
+  last_frontier_target_ = selected;
+  have_last_frontier_target_ = true;
+  ROS_INFO("[AVIC_FRONTIER] new adaptive decision query=%u apexnav_target=(%.3f, %.3f)",
+      frontier_query_id_, selected(0), selected(1));
+}
+
+void ExplorationFSM::publishTopKFrontiers(const Vector2d& current_pos, double current_yaw)
+{
+  std_msgs::Float32MultiArray msg;
+  vector<SemanticFrontier> semantic_frontiers;
+  expl_manager_->getSortedSemanticFrontiers(
+      current_pos, expl_manager_->ed_->frontier_averages_, semantic_frontiers);
+
+  const int count = std::min(fp_->avic_top_k_, static_cast<int>(semantic_frontiers.size()));
+  vector<int> candidate_indices;
+  candidate_indices.reserve(count);
+  for (int index = 0; index < count; ++index)
+    candidate_indices.push_back(index);
+
+  // The geometric/Closest winner can sit outside the semantic top-k.  Always
+  // include ApexNav's actually selected frontier so G1 can compare the two
+  // policies instead of reasoning over an incomplete candidate set.
+  int selected_index = -1;
+  for (int index = 0; index < static_cast<int>(semantic_frontiers.size()); ++index) {
+    if ((semantic_frontiers[index].position - expl_manager_->ed_->next_pos_).norm() < 0.10) {
+      selected_index = index;
+      break;
+    }
+  }
+  if (selected_index >= count && !candidate_indices.empty())
+    candidate_indices.back() = selected_index;
+
+  constexpr int route_action_count = FSMConstants::AVIC_ROUTE_PREFIX_ACTIONS;
+  constexpr int field_count = 12 + route_action_count;
+  msg.layout.dim.resize(2);
+  msg.layout.dim[0].label = "frontier";
+  msg.layout.dim[0].size = count;
+  msg.layout.dim[0].stride = count * field_count;
+  msg.layout.dim[1].label =
+      "x,y,semantic,path_length,relative_yaw,first_action,selected,query_id,query_active,"
+      "observation_evidence,evidence_observed,route_action_count,route_action_0..5";
+  msg.layout.dim[1].size = field_count;
+  msg.layout.dim[1].stride = field_count;
+  msg.data.reserve(count * field_count);
+
+  const Vector2d saved_local_pos = fd_->local_pos_;
+  for (int rank = 0; rank < count; ++rank) {
+    const auto& frontier = semantic_frontiers[candidate_indices[rank]];
+    const int first_action =
+        planNextBestAction(current_pos, current_yaw, frontier.path, true);
+    vector<int> route_actions = buildFrontierActionPrefix(
+        current_pos, current_yaw, frontier.path, route_action_count);
+    // The first route action must be exactly the action produced by ApexNav's
+    // current A* path controller.  A mismatch means the future simulation
+    // drifted before its first step, so keep the authoritative first action.
+    if (route_actions.empty())
+      route_actions.push_back(first_action);
+    else
+      route_actions.front() = first_action;
+    const Vector2d local_target = fd_->local_pos_;
+    double relative_yaw =
+        std::atan2(local_target(1) - current_pos(1), local_target(0) - current_pos(0)) -
+        current_yaw;
+    wrapAngle(relative_yaw);
+    const bool selected =
+        (frontier.position - expl_manager_->ed_->next_pos_).norm() < 0.10;
+
+    msg.data.push_back(static_cast<float>(frontier.position(0)));
+    msg.data.push_back(static_cast<float>(frontier.position(1)));
+    msg.data.push_back(static_cast<float>(frontier.semantic_value));
+    msg.data.push_back(static_cast<float>(frontier.path_length));
+    msg.data.push_back(static_cast<float>(relative_yaw));
+    msg.data.push_back(static_cast<float>(first_action));
+    msg.data.push_back(selected ? 1.0F : 0.0F);
+    msg.data.push_back(static_cast<float>(frontier_query_id_));
+    msg.data.push_back(frontier_query_active_ ? 1.0F : 0.0F);
+    msg.data.push_back(static_cast<float>(frontier.observation_evidence));
+    const bool evidence_observed =
+        frontier.observation_evidence >= fp_->avic_observation_evidence_threshold_;
+    msg.data.push_back(evidence_observed ? 1.0F : 0.0F);
+    msg.data.push_back(static_cast<float>(route_actions.size()));
+    for (int action_index = 0; action_index < route_action_count; ++action_index) {
+      const int action = action_index < static_cast<int>(route_actions.size())
+          ? route_actions[action_index]
+          : -1;
+      msg.data.push_back(static_cast<float>(action));
+    }
+
+    std::ostringstream route_stream;
+    for (size_t action_index = 0; action_index < route_actions.size(); ++action_index) {
+      if (action_index > 0) route_stream << ',';
+      route_stream << route_actions[action_index];
+    }
+    const std::string route_string = route_stream.str();
+
+    ROS_INFO("[AVIC_FRONTIER] rank=%d x=%.3f y=%.3f semantic=%.6f path_length=%.3f "
+             "relative_yaw=%.3f first_action=%d selected=%d query=%u active=%d "
+             "evidence=%.3f observed=%d route_actions=%s",
+        rank, frontier.position(0), frontier.position(1), frontier.semantic_value,
+        frontier.path_length, relative_yaw, first_action, selected ? 1 : 0,
+        frontier_query_id_, frontier_query_active_ ? 1 : 0, frontier.observation_evidence,
+        evidence_observed ? 1 : 0, route_string.c_str());
+  }
+  fd_->local_pos_ = saved_local_pos;
+  frontier_candidates_pub_.publish(msg);
 }
 
 int ExplorationFSM::planNextBestAction(
@@ -373,6 +537,53 @@ int ExplorationFSM::planNextBestAction(
   // Calculate target orientation from best step direction
   double target_yaw = std::atan2(best_step(1) - current_pos(1), best_step(0) - current_pos(0));
   return decideNextAction(current_yaw, target_yaw);
+}
+
+vector<int> ExplorationFSM::buildFrontierActionPrefix(const Vector2d& current_pos,
+    double current_yaw, const vector<Vector2d>& path, int max_actions)
+{
+  vector<int> actions;
+  if (path.empty() || max_actions <= 0)
+    return actions;
+
+  Vector2d simulated_pos = current_pos;
+  double simulated_yaw = current_yaw;
+  actions.reserve(max_actions);
+
+  // Roll ApexNav's own local A* path follower forward in Habitat's discrete
+  // action units.  This is only a route description for SVC; it does not alter
+  // odometry, map state, the selected frontier, or the executed action.
+  for (int index = 0; index < max_actions; ++index) {
+    const Vector2d local_target =
+        selectLocalTarget(simulated_pos, path, FSMConstants::LOCAL_DISTANCE);
+    Vector2d best_step = local_target;
+    if ((simulated_pos - path.back()).norm() > FSMConstants::ACTION_DISTANCE)
+      best_step = computeBestStep(simulated_pos, simulated_yaw, local_target);
+
+    const double target_yaw =
+        std::atan2(best_step(1) - simulated_pos(1), best_step(0) - simulated_pos(0));
+    const int action = decideNextAction(simulated_yaw, target_yaw);
+    if (action != ACTION::MOVE_FORWARD && action != ACTION::TURN_LEFT &&
+        action != ACTION::TURN_RIGHT)
+      break;
+    actions.push_back(action);
+
+    if (action == ACTION::TURN_LEFT) {
+      simulated_yaw += FSMConstants::ACTION_ANGLE;
+      wrapAngle(simulated_yaw);
+    }
+    else if (action == ACTION::TURN_RIGHT) {
+      simulated_yaw -= FSMConstants::ACTION_ANGLE;
+      wrapAngle(simulated_yaw);
+    }
+    else {
+      simulated_pos(0) += FSMConstants::ACTION_DISTANCE * std::cos(simulated_yaw);
+      simulated_pos(1) += FSMConstants::ACTION_DISTANCE * std::sin(simulated_yaw);
+      if ((simulated_pos - path.back()).norm() <= FSMConstants::REACH_DISTANCE)
+        break;
+    }
+  }
+  return actions;
 }
 
 Vector2d ExplorationFSM::selectLocalTarget(
@@ -602,9 +813,119 @@ void ExplorationFSM::habitatStateCallback(const std_msgs::Int32ConstPtr& msg)
 {
   if (msg->data == HABITAT_STATE::ACTION_FINISH && state_ == ROS_STATE::WAIT_ACTION_FINISH)
     transitState(PLAN_ACTION, "Habitat Finish Action");
-  if (msg->data == HABITAT_STATE::EPISODE_FINISH)
+  if (msg->data == HABITAT_STATE::EPISODE_FINISH) {
+    ++benchmark_episode_index_;
+    benchmark_decision_index_ = 0;
     init(nh_);
+  }
   return;
+}
+
+// Habitat remains the authority on what was actually executed.  AVIC no longer
+// publishes primitive actions, but this check also protects future controllers.
+void ExplorationFSM::executedActionCallback(const std_msgs::Int32ConstPtr& msg)
+{
+  if (msg->data < ACTION::STOP || msg->data > ACTION::TURN_UP) {
+    ROS_WARN("Ignoring invalid executed action: %d", msg->data);
+    return;
+  }
+  if (fd_->newest_action_ != msg->data) {
+    ROS_INFO("Executed action differs from last published action: planned=%d executed=%d",
+        fd_->newest_action_,
+        msg->data);
+  }
+  fd_->newest_action_ = msg->data;
+}
+
+void ExplorationFSM::avicFrontierScoresCallback(
+    const std_msgs::Float32MultiArrayConstPtr& msg)
+{
+  constexpr size_t header_count = 2;
+  constexpr size_t score_field_count = 6;
+  if (msg->data.size() < header_count) {
+    ROS_WARN("Ignoring malformed AVIC frontier scores with %zu fields", msg->data.size());
+    return;
+  }
+
+  const int query_value = static_cast<int>(std::lround(msg->data[0]));
+  if (query_value < 0 || static_cast<std::uint32_t>(query_value) != frontier_query_id_ ||
+      !frontier_query_active_) {
+    ROS_WARN("Ignoring stale AVIC frontier scores query=%d current=%u active=%d", query_value,
+        frontier_query_id_, frontier_query_active_ ? 1 : 0);
+    return;
+  }
+
+  const int score_count = static_cast<int>(std::lround(msg->data[1]));
+  if (score_count < 1 || msg->data.size() !=
+          header_count + static_cast<size_t>(score_count) * score_field_count) {
+    ROS_WARN("Ignoring malformed AVIC frontier score count=%d fields=%zu", score_count,
+        msg->data.size());
+    return;
+  }
+
+  vector<TemporaryFrontierScore> scores;
+  scores.reserve(score_count);
+  for (int index = 0; index < score_count; ++index) {
+    const size_t offset = header_count + static_cast<size_t>(index) * score_field_count;
+    const double x = static_cast<double>(msg->data[offset + 1]);
+    const double y = static_cast<double>(msg->data[offset + 2]);
+    const double real_score = static_cast<double>(msg->data[offset + 3]);
+    const double imagined_itm_score = static_cast<double>(msg->data[offset + 4]);
+    const double decision_score = static_cast<double>(msg->data[offset + 5]);
+    if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(real_score) ||
+        !std::isfinite(imagined_itm_score) || !std::isfinite(decision_score) ||
+        decision_score < 0.0) {
+      ROS_WARN("Ignoring non-finite AVIC frontier score at index=%d", index);
+      return;
+    }
+    TemporaryFrontierScore score;
+    score.position = Vector2d(x, y);
+    score.real_semantic_value = real_score;
+    score.imagined_semantic_value = imagined_itm_score;
+    score.decision_semantic_value = decision_score;
+    scores.push_back(score);
+  }
+
+  frontier_query_active_ = false;
+  ROS_INFO("[AVIC_SCORE] received query=%d score_count=%d", query_value, score_count);
+
+  const Vector2d original_next_pos = expl_manager_->ed_->next_pos_;
+  const vector<Vector2d> original_next_path = expl_manager_->ed_->next_best_path_;
+  const vector<Vector2d> original_tsp_tour = expl_manager_->ed_->tsp_tour_;
+  int matched_score_count = 0;
+  const int exploration_result = expl_manager_->planNextBestPointWithTemporaryScores(
+      fd_->start_pt_, fd_->start_yaw_(0), scores, fp_->avic_score_match_tolerance_,
+      matched_score_count);
+  const bool applied = exploration_result == EXPL_RESULT::EXPLORATION &&
+      matched_score_count > 0 && !expl_manager_->ed_->next_best_path_.empty();
+
+  const Vector2d current_pos(fd_->odom_pos_(0), fd_->odom_pos_(1));
+  int safe_action = fd_->newest_action_;
+  if (applied) {
+    safe_action = planNextBestAction(
+        current_pos, fd_->odom_yaw_, expl_manager_->ed_->next_best_path_, true);
+    fd_->newest_action_ = safe_action;
+    fd_->replan_flag_ = true;
+    last_frontier_target_ = expl_manager_->ed_->next_pos_;
+    have_last_frontier_target_ = true;
+    std_msgs::Int32 action_msg;
+    action_msg.data = safe_action;
+    action_pub_.publish(action_msg);
+  }
+  else {
+    expl_manager_->ed_->next_pos_ = original_next_pos;
+    expl_manager_->ed_->next_best_path_ = original_next_path;
+    expl_manager_->ed_->tsp_tour_ = original_tsp_tour;
+  }
+
+  std_msgs::Float32MultiArray ack;
+  ack.data = { static_cast<float>(query_value), static_cast<float>(safe_action),
+    applied ? 1.0F : 0.0F };
+  avic_frontier_ack_pub_.publish(ack);
+  ROS_INFO("[AVIC_SCORE] ack query=%d applied=%d matched=%d apexnav_safe_action=%d "
+           "selected=(%.3f, %.3f)",
+      query_value, applied ? 1 : 0, matched_score_count, safe_action,
+      expl_manager_->ed_->next_pos_(0), expl_manager_->ed_->next_pos_(1));
 }
 
 // Periodically update frontiers and visualize in idle states

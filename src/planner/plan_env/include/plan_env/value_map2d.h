@@ -3,6 +3,7 @@
 
 #include <ros/ros.h>
 #include <Eigen/Eigen>
+#include <cmath>
 #include <vector>
 
 #include <plan_env/sdf_map2d.h>
@@ -28,6 +29,8 @@ public:
   double getValue(const Vector2i& idx);
   double getConfidence(const Vector2d& pos);
   double getConfidence(const Vector2i& idx);
+  double getObservationEvidence(const Vector2d& pos);
+  double getObservationEvidence(const Vector2i& idx);
 
 private:
   double getFovConfidence(
@@ -36,6 +39,9 @@ private:
 
   vector<double> value_buffer_;  // Grid-based semantic value storage
   vector<double> confidence_buffer_;  // Grid-based confidence storage for weighted fusion
+  // Monotonic real-observation coverage.  This is deliberately separate from
+  // semantic value so a low score can be distinguished from an unseen cell.
+  vector<double> observation_weight_buffer_;
 
   // Utils
   SDFMap2D* sdf_map_;
@@ -59,6 +65,21 @@ inline double ValueMap::getConfidence(const Vector2i& idx)
 {
   int adr = sdf_map_->toAddress(idx);
   return confidence_buffer_[adr];
+}
+
+inline double ValueMap::getObservationEvidence(const Vector2d& pos)
+{
+  Vector2i idx;
+  sdf_map_->posToIndex(pos, idx);
+  return getObservationEvidence(idx);
+}
+
+inline double ValueMap::getObservationEvidence(const Vector2i& idx)
+{
+  int adr = sdf_map_->toAddress(idx);
+  // Map an unbounded sum of real FOV weights into [0, 1).  Imagined frames
+  // never call updateValueMap and therefore can never change this marker.
+  return 1.0 - std::exp(-observation_weight_buffer_[adr]);
 }
 
 inline double ValueMap::getValue(const Vector2d& pos)

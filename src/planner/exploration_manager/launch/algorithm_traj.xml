@@ -69,6 +69,9 @@
         <param name="exploration/sigma_threshold" value="0.015" type="double"/>
         <param name="exploration/max_to_mean_threshold" value="1.10" type="double"/>
         <param name="exploration/max_to_mean_percentage" value="0.90" type="double"/>
+        <param name="exploration/avic_top_k" value="3" type="int"/>
+        <param name="exploration/avic_score_match_tolerance" value="0.10" type="double"/>
+        <param name="exploration/avic_observation_evidence_threshold" value="0.55" type="double"/>
         <param name="exploration/tsp_dir" value="$(find lkh_mtsp_solver)/resource" type="string"/>
 
         <param name="frontier/cluster_min" value="5" type="int"/>

@@ -1,0 +1,112 @@
+{
+  "name": "hm3dv2_clear_targets_top10_apexnav_spl",
+  "dataset": "hm3dv2",
+  "split": "val",
+  "selection_version": 1,
+  "source_manifest": "hm3dv2_clear_targets_50_habitat.json",
+  "ranking_source": "paired baseline run summarized in docs/CURRENT_RESULTS.zh-CN.md",
+  "ranking_metric": "per_episode_spl_descending",
+  "ranking_note": "Per-episode SPL is reconstructed from cumulative totals printed to two decimals; all selected episodes succeeded in the pure ApexNav run.",
+  "episodes": [
+    {
+      "scene_key": "VBzV5z6i1WS",
+      "episode_id": "5",
+      "object_category": "bed",
+      "geodesic_distance": 7.16176,
+      "euclidean_distance": 6.7661,
+      "source_episode_id": "4",
+      "baseline_task_no": 23,
+      "baseline_spl": 0.91
+    },
+    {
+      "scene_key": "p53SfW6mjZe",
+      "episode_id": "7",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 6.99225,
+      "euclidean_distance": 6.32837,
+      "source_episode_id": "1",
+      "baseline_task_no": 36,
+      "baseline_spl": 0.91
+    },
+    {
+      "scene_key": "QaLdnwvtxbs",
+      "episode_id": "17",
+      "object_category": "tv_monitor",
+      "geodesic_distance": 5.92444,
+      "euclidean_distance": 4.62267,
+      "source_episode_id": "4",
+      "baseline_task_no": 21,
+      "baseline_spl": 0.87
+    },
+    {
+      "scene_key": "bCPU9suPUw9",
+      "episode_id": "21",
+      "object_category": "sofa",
+      "geodesic_distance": 8.09978,
+      "euclidean_distance": 6.90087,
+      "source_episode_id": "2",
+      "baseline_task_no": 26,
+      "baseline_spl": 0.87
+    },
+    {
+      "scene_key": "h1zeeAwLh9Z",
+      "episode_id": "5",
+      "object_category": "bed",
+      "geodesic_distance": 6.78116,
+      "euclidean_distance": 5.63529,
+      "source_episode_id": "1",
+      "baseline_task_no": 30,
+      "baseline_spl": 0.86
+    },
+    {
+      "scene_key": "QaLdnwvtxbs",
+      "episode_id": "18",
+      "object_category": "sofa",
+      "geodesic_distance": 7.10658,
+      "euclidean_distance": 4.82926,
+      "source_episode_id": "2",
+      "baseline_task_no": 20,
+      "baseline_spl": 0.85
+    },
+    {
+      "scene_key": "h1zeeAwLh9Z",
+      "episode_id": "21",
+      "object_category": "sofa",
+      "geodesic_distance": 6.90552,
+      "euclidean_distance": 6.42731,
+      "source_episode_id": "3",
+      "baseline_task_no": 31,
+      "baseline_spl": 0.82
+    },
+    {
+      "scene_key": "CrMo8WxCyVb",
+      "episode_id": "13",
+      "object_category": "sofa",
+      "geodesic_distance": 6.59392,
+      "euclidean_distance": 5.93178,
+      "source_episode_id": "2",
+      "baseline_task_no": 8,
+      "baseline_spl": 0.81
+    },
+    {
+      "scene_key": "DYehNKdT76V",
+      "episode_id": "13",
+      "object_category": "sofa",
+      "geodesic_distance": 6.59802,
+      "euclidean_distance": 3.44861,
+      "source_episode_id": "3",
+      "baseline_task_no": 9,
+      "baseline_spl": 0.81
+    },
+    {
+      "scene_key": "mL8ThkuaVTM",
+      "episode_id": "2",
+      "object_category": "bed",
+      "geodesic_distance": 6.92743,
+      "euclidean_distance": 5.85658,
+      "source_episode_id": "4",
+      "baseline_task_no": 33,
+      "baseline_spl": 0.81
+    }
+  ]
+}

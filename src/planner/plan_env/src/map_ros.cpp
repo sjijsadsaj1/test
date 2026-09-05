@@ -109,7 +109,9 @@ void MapROS::init()
   sync_image_pose_.reset(new message_filters::Synchronizer<MapROS::SyncPolicyImagePose>(
       MapROS::SyncPolicyImagePose(20), *depth_sub_, *pose_sub_));
   sync_image_pose_->setMaxIntervalDuration(ros::Duration(0.01));  // Set maximum temporal offset
-  sync_image_pose_->registerCallback(boost::bind(&MapROS::depthPoseCallback, this, _1, _2));
+  sync_image_pose_->registerCallback(boost::bind(&MapROS::depthPoseCallback, this,
+                                                 boost::placeholders::_1,
+                                                 boost::placeholders::_2));
 
   // Initialize object tracking variables
   continue_over_depth_count_ = -1;

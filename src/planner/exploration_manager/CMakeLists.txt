@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(exploration_manager)
 
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-std=c++11")
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "-std=c++17")
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall")
 
 find_package(Eigen3 REQUIRED)
@@ -42,6 +42,7 @@ add_executable(exploration_node
   src/exploration_fsm_traj.cpp
   src/exploration_manager.cpp
 )
+add_dependencies(exploration_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(exploration_node
   ${catkin_LIBRARIES}
 )

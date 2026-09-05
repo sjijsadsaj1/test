@@ -15,6 +15,8 @@
 #include <path_searching/kino_astar.h>
 #include <trajectory_manager/optimizer.h>
 
+#include <algorithm>
+
 using namespace Eigen;
 
 namespace apexnav_planner {
@@ -175,6 +177,26 @@ int ExplorationManager::planNextBestPoint(const Vector3d& pos, const double& yaw
   return EXPLORATION;
 }
 
+int ExplorationManager::planNextBestPointWithTemporaryScores(const Vector3d& pos,
+    const double& yaw, const vector<TemporaryFrontierScore>& scores, double match_tolerance,
+    int& matched_score_count)
+{
+  temporary_frontier_scores_ = scores;
+  temporary_score_match_tolerance_ = match_tolerance;
+  temporary_score_match_count_ = 0;
+  temporary_scores_active_ = !temporary_frontier_scores_.empty();
+
+  const int result = planNextBestPoint(pos, yaw);
+  matched_score_count = temporary_score_match_count_;
+
+  // Imagination is scoped to exactly one Hybrid decision.  It is never
+  // retained in the Semantic Score Map or reused after the candidate snapshot.
+  temporary_scores_active_ = false;
+  temporary_frontier_scores_.clear();
+  temporary_score_match_count_ = 0;
+  return result;
+}
+
 void ExplorationManager::chooseExplorationPolicy(Vector2d cur_pos, vector<Vector2d> frontiers,
     Vector2d& next_best_pos, vector<Vector2d>& next_best_path)
 {
@@ -205,6 +227,35 @@ void ExplorationManager::chooseExplorationPolicy(Vector2d cur_pos, vector<Vector
   }
 }
 
+bool ExplorationManager::selectReachableFrontier(const Vector2d& cur_pos,
+    const Vector2d& requested_pos, double match_tolerance, Vector2d& selected_pos,
+    vector<Vector2d>& selected_path)
+{
+  vector<SemanticFrontier> semantic_frontiers;
+  getSortedSemanticFrontiers(cur_pos, ed_->frontier_averages_, semantic_frontiers);
+  if (semantic_frontiers.empty())
+    return false;
+
+  const SemanticFrontier* nearest = nullptr;
+  double nearest_distance = std::numeric_limits<double>::max();
+  for (const auto& frontier : semantic_frontiers) {
+    const double distance = (frontier.position - requested_pos).norm();
+    if (distance < nearest_distance) {
+      nearest = &frontier;
+      nearest_distance = distance;
+    }
+  }
+  if (nearest == nullptr || nearest_distance > match_tolerance || nearest->path.empty())
+    return false;
+
+  // The path originates from ApexNav's real occupancy map and A* search.  The
+  // temporary imagination score is intentionally absent from this method and
+  // can never modify the Semantic Score Map or bypass reachability checks.
+  selected_pos = nearest->position;
+  selected_path = nearest->path;
+  return true;
+}
+
 void ExplorationManager::hybridExplorePolicy(Vector2d cur_pos, vector<Vector2d> frontiers,
     Vector2d& next_best_pos, vector<Vector2d>& next_best_path)
 {
@@ -217,6 +268,15 @@ void ExplorationManager::hybridExplorePolicy(Vector2d cur_pos, vector<Vector2d> 
 
   double std_dev, max_to_mean, mean;
   calcSemanticFrontierInfo(sem_frontiers, std_dev, max_to_mean, mean);
+
+  const int augmented_count = static_cast<int>(std::count_if(sem_frontiers.begin(),
+      sem_frontiers.end(), [](const SemanticFrontier& frontier) {
+        return frontier.score_augmented;
+      }));
+  if (augmented_count > 0) {
+    ROS_INFO("[AVIC_SCORE] Hybrid input augmented=%d sigma=%.6f max_to_mean=%.6f mean=%.6f",
+        augmented_count, std_dev, max_to_mean, mean);
+  }
 
   // Decide between exploitation and exploration based on semantic statistics
   if (std_dev > std_dev_threshold && max_to_mean > max_to_mean_threshold) {
@@ -581,6 +641,8 @@ void ExplorationManager::getSortedSemanticFrontiers(const Vector2d& cur_pos,
     sdf_map_->posToIndex(frontier, idx);
     auto nbrs = allNeighbors(idx, 2);  // 5x5 grid neighborhood
     double value = sdf_map_->value_map_->getValue(idx);
+    double evidence_sum = sdf_map_->value_map_->getObservationEvidence(idx);
+    int evidence_count = 1;
 
     // Find maximum semantic value in neighborhood (ignoring occupied cells)
     for (auto& nbr : nbrs) {
@@ -588,8 +650,34 @@ void ExplorationManager::getSortedSemanticFrontiers(const Vector2d& cur_pos,
           sdf_map_->getOccupancy(nbr) == SDFMap2D::OCCUPIED)
         continue;
       value = std::max(value, sdf_map_->value_map_->getValue(nbr));
+      evidence_sum += sdf_map_->value_map_->getObservationEvidence(nbr);
+      ++evidence_count;
     }
     sem_frontier.semantic_value = value;
+    sem_frontier.real_semantic_value = value;
+    sem_frontier.observation_evidence = evidence_sum / static_cast<double>(evidence_count);
+
+    if (temporary_scores_active_) {
+      const TemporaryFrontierScore* matched = nullptr;
+      double nearest_distance = std::numeric_limits<double>::max();
+      for (const auto& candidate_score : temporary_frontier_scores_) {
+        const double distance = (candidate_score.position - frontier).norm();
+        if (distance < nearest_distance) {
+          nearest_distance = distance;
+          matched = &candidate_score;
+        }
+      }
+      if (matched != nullptr && nearest_distance <= temporary_score_match_tolerance_) {
+        sem_frontier.semantic_value = matched->decision_semantic_value;
+        sem_frontier.imagined_semantic_value = matched->imagined_semantic_value;
+        sem_frontier.score_augmented = true;
+        ++temporary_score_match_count_;
+        ROS_INFO("[AVIC_SCORE] frontier=(%.3f, %.3f) real_map=%.6f real_request=%.6f "
+                 "imagined_itm=%.6f decision=%.6f match_distance=%.3f",
+            frontier(0), frontier(1), value, matched->real_semantic_value,
+            matched->imagined_semantic_value, matched->decision_semantic_value, nearest_distance);
+      }
+    }
 
     // Validate reachability and compute path cost
     Vector2d tmp_pos;

@@ -20,6 +20,7 @@ ValueMap::ValueMap(SDFMap2D* sdf_map, ros::NodeHandle& nh)
   int voxel_num = sdf_map_->getVoxelNum();
   value_buffer_ = vector<double>(voxel_num, 0.0);
   confidence_buffer_ = vector<double>(voxel_num, 0.0);
+  observation_weight_buffer_ = vector<double>(voxel_num, 0.0);
 }
 
 void ValueMap::updateValueMap(const Vector2d& sensor_pos, const double& sensor_yaw,
@@ -33,6 +34,7 @@ void ValueMap::updateValueMap(const Vector2d& sensor_pos, const double& sensor_y
     // Calculate FOV-based confidence for current observation
     double now_confidence = getFovConfidence(sensor_pos, sensor_yaw, pos);
     double now_value = itm_score;
+    observation_weight_buffer_[adr] += now_confidence;
 
     // Retrieve existing confidence and value
     double last_confidence = confidence_buffer_[adr];

@@ -91,6 +91,9 @@ struct FSMParam {
     replan_traj_end_threshold_ = 1.0;
     replan_frontier_change_delay_ = 0.5;
     replan_timeout_ = 2.0;
+    avic_top_k_ = 3;
+    avic_score_match_tolerance_ = 0.10;
+    avic_observation_evidence_threshold_ = 0.55;
 
     const double step_length = 0.25;
     const double angle_increment = M_PI / 6;
@@ -108,6 +111,9 @@ struct FSMParam {
   double replan_traj_end_threshold_;
   double replan_frontier_change_delay_;
   double replan_timeout_;
+  int avic_top_k_;
+  double avic_score_match_tolerance_;
+  double avic_observation_evidence_threshold_;
 };
 
 struct ExplorationData {
