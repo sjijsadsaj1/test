@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(plan_env)
 
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-std=c++11")
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "-std=c++17")
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall")
 
 find_package(OpenCV REQUIRED)
@@ -62,6 +62,7 @@ add_library(plan_env
   src/object_map2d.cpp
   src/value_map2d.cpp
 )
+add_dependencies(plan_env ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(plan_env
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}

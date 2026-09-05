@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(trajectory_manager)
 
-set(CMAKE_CXX_FLAGS "-std=c++14")
+set(CMAKE_CXX_FLAGS "-std=c++17")
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -fPIC")
 
@@ -53,6 +53,7 @@ add_executable(traj_server
   src/traj_server.cpp
   src/mpc.cpp
 )
+add_dependencies(traj_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(traj_server
   ${catkin_LIBRARIES}
   OsqpEigen::OsqpEigen
@@ -61,3 +62,4 @@ target_link_libraries(traj_server
 add_library(trajectory_manager
   src/optimizer.cpp
 )
+add_dependencies(trajectory_manager ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

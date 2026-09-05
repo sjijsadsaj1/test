@@ -1,8 +1,17 @@
+import os
+
 from llm.utils.get_sys_prompt import get_similar_answer_prompt
 from openai import OpenAI
-client = OpenAI(api_key="write your api key here", base_url="https://api.deepseek.com")
+
 
 def deepseek_respond(prompt):
+    api_key = os.environ.get("DEEPSEEK_API_KEY")
+    if not api_key:
+        raise RuntimeError("DEEPSEEK_API_KEY is required when llm_client=deepseek")
+    client = OpenAI(
+        api_key=api_key,
+        base_url=os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
+    )
     system_prompts = get_similar_answer_prompt()
     msg = {
         "role": "user",

@@ -2,8 +2,8 @@ from typing import Optional
 
 import numpy as np
 import torch
-import torchvision.transforms.functional as F
 import groundingdino.datasets.transforms as T
+from PIL import Image
 from vlm.detector.detections import ObjectDetections
 
 from ..server_wrapper import ServerMixin, host_model, send_request, str_to_image
@@ -53,10 +53,17 @@ class GroundingDINO:
             ObjectDetections: An instance of the ObjectDetections class containing the
                 object detections.
         """
-        image_tensor = F.to_tensor(image)
-        image_transformed = F.normalize(
-            image_tensor, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        transform = T.Compose(
+            [
+                T.RandomResize([800], max_size=1333),
+                T.ToTensor(),
+                T.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225],
+                ),
+            ]
         )
+        image_transformed, _ = transform(Image.fromarray(image), None)
 
         if caption is None:
             caption_to_use = self.caption

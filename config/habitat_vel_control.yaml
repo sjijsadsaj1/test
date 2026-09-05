@@ -33,6 +33,7 @@ habitat:
     habitat_sim_v0:
       allow_sliding: true
       enable_physics: true
+      gpu_device_id: -1
     forward_step_size: 0
     turn_angle: 0
     agents:

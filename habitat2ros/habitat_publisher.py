@@ -1,12 +1,31 @@
 import rospy
 from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
-from cv_bridge import CvBridge
 from geometry_msgs.msg import Pose, Quaternion, Point, PoseStamped
-from tf.transformations import quaternion_from_euler
 from habitat.core.simulator import Observations
 import numpy as np
 from copy import deepcopy
+
+
+def quaternion_from_euler(roll, pitch, yaw):
+    """Return an ROS-order (x, y, z, w) quaternion without the tf2 ABI."""
+    roll = float(np.asarray(roll).reshape(-1)[0])
+    pitch = float(np.asarray(pitch).reshape(-1)[0])
+    yaw = float(np.asarray(yaw).reshape(-1)[0])
+
+    half_roll = roll * 0.5
+    half_pitch = pitch * 0.5
+    half_yaw = yaw * 0.5
+    sr, cr = np.sin(half_roll), np.cos(half_roll)
+    sp, cp = np.sin(half_pitch), np.cos(half_pitch)
+    sy, cy = np.sin(half_yaw), np.cos(half_yaw)
+
+    return (
+        sr * cp * cy - cr * sp * sy,
+        cr * sp * cy + sr * cp * sy,
+        cr * cp * sy - sr * sp * cy,
+        cr * cp * cy + sr * sp * sy,
+    )
 
 
 class ROSPublisher:
@@ -16,17 +35,31 @@ class ROSPublisher:
         self.rgb_pub = rospy.Publisher("/habitat/camera_rgb", Image, queue_size=10)
         self.odom_pub = rospy.Publisher("/habitat/odom", Odometry, queue_size=10)
         self.pose_pub = rospy.Publisher("/habitat/sensor_pose", Odometry, queue_size=10)
-        # Create cv_bridge object
-        self.bridge = CvBridge()
-
     def publish_depth(self, ros_time, depth_image):
-        depth_msg = self.bridge.cv2_to_imgmsg(depth_image, encoding="passthrough")
+        depth_image = np.asarray(depth_image, dtype=np.float32)
+        if depth_image.ndim == 3 and depth_image.shape[-1] == 1:
+            depth_image = depth_image[..., 0]
+        if depth_image.ndim != 2:
+            raise ValueError(f"Expected HxW depth image, got {depth_image.shape}")
+        depth_image = np.ascontiguousarray(depth_image)
+        depth_msg = Image()
+        depth_msg.height, depth_msg.width = depth_image.shape
+        depth_msg.encoding = "32FC1"
+        depth_msg.is_bigendian = False
+        depth_msg.step = depth_msg.width * depth_image.dtype.itemsize
+        depth_msg.data = depth_image.tobytes()
         depth_msg.header.stamp = ros_time
         depth_msg.header.frame_id = "world"
         self.depth_pub.publish(depth_msg)
 
     def publish_rgb(self, ros_time, rgb_image):
-        rgb_msg = self.bridge.cv2_to_imgmsg(rgb_image, encoding="rgb8")
+        rgb_image = np.ascontiguousarray(np.asarray(rgb_image, dtype=np.uint8))
+        rgb_msg = Image()
+        rgb_msg.height, rgb_msg.width = rgb_image.shape[:2]
+        rgb_msg.encoding = "rgb8"
+        rgb_msg.is_bigendian = False
+        rgb_msg.step = rgb_msg.width * 3
+        rgb_msg.data = rgb_image.tobytes()
         rgb_msg.header.stamp = ros_time
         rgb_msg.header.frame_id = "world"
         self.rgb_pub.publish(rgb_msg)

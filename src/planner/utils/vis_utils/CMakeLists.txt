@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(vis_utils)
 
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-std=c++11")
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "-std=c++17")
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall")
 
 find_package(catkin REQUIRED COMPONENTS
@@ -36,6 +36,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_library(vis_utils
     src/planning_visualization.cpp
 )
+add_dependencies(vis_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(vis_utils
     ${catkin_LIBRARIES}
 )
