@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   sensor_msgs
+  nav_msgs
   visualization_msgs
   cv_bridge
   message_filters
@@ -28,16 +29,19 @@ add_message_files(
   MultipleMasksWithConfidence.msg
 )
 
+add_service_files(FILES PlanObservation.srv ReviewTarget.srv)
+
 generate_messages(
   DEPENDENCIES
   std_msgs
   sensor_msgs
+  nav_msgs
 )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES plan_env
-  CATKIN_DEPENDS roscpp std_msgs message_runtime sensor_msgs
+  CATKIN_DEPENDS roscpp std_msgs message_runtime sensor_msgs nav_msgs
   #  DEPENDS system_lib
 )
 

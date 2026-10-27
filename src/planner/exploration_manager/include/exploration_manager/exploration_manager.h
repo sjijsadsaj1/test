@@ -3,6 +3,8 @@
 
 // Third-party libraries
 #include <Eigen/Eigen>
+#include <exploration_manager/target_confirmation.h>
+#include <exploration_manager/frontier_cycle_memory.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -51,11 +53,10 @@ struct SemanticFrontier {
 
   bool operator<(const SemanticFrontier& other) const
   {
+    // ApexNav 049971b rule: near-equal semantics prefer shorter paths.
     if (fabs(semantic_value - other.semantic_value) < 1e-4) {
-      // If semantic values are equal, sort by path length (ascending)
       return path_length < other.path_length;
     }
-    // Otherwise, sort by semantic value (descending)
     return semantic_value > other.semantic_value;
   }
 };
@@ -83,8 +84,22 @@ public:
   ~ExplorationManager();  // Explicit destructor declaration for shared_ptr with forward declaration
 
   void initialize(ros::NodeHandle& nh);
+  bool cycleMemoryEnabled() const;
+  void confirmCycleDecision(int previous_step,int executed_action,const std::string& episode);
+  void stageCycleDecision(const Vector2d& robot,int step,int action,const std::string& episode);
+  bool rejectCycleGoal(const Vector2d& robot,int step,const std::string& episode);
+  void suppressCycleGoal(const Vector2d& robot,int step,const std::string& episode);
 
   int planNextBestPoint(const Vector3d& pos, const double& yaw);
+  bool planConfirmedObject(const Vector3d& pos);
+  void setConfirmationStep(int step) { confirmation_step_ = step; unconfirmed_exclusions_.prune(step); }
+  int review_object_id_{-1};
+  void rejectUnconfirmedGoal(const Vector2d& goal) { unconfirmed_exclusions_.reject(goal, confirmation_step_); }
+  void rejectStalledHypothesis(const Vector2d& goal) { unconfirmed_exclusions_.reject(goal, confirmation_step_, 80); }
+  bool openSpaceRecovery(const Vector2d& pos, Vector2d& goal, vector<Vector2d>& path);
+  bool recoveryToPoint(const Vector2d& pos, const Vector2d& goal, vector<Vector2d>& path);
+  bool recoveryPath(const Vector2d& pos, const Vector2d& goal, bool alternate,
+      Vector2d& selected, vector<Vector2d>& path);
   int planNextBestPointWithTemporaryScores(const Vector3d& pos, const double& yaw,
       const vector<TemporaryFrontierScore>& scores, double match_tolerance,
       int& matched_score_count);
@@ -108,6 +123,15 @@ public:
   typedef shared_ptr<ExplorationManager> Ptr;
 
 private:
+  FrontierCycleMemory cycle_memory_;
+  bool cycleDecision(const Vector2d& robot,const Vector2d& goal,int step,int action,
+      FrontierCycleMemory::Decision& decision);
+  bool realCycleContext(FrontierCycleMemory::Point& context);
+  UnconfirmedGoalExclusions unconfirmed_exclusions_;
+  int confirmation_step_{0};
+  bool searchUnconfirmedObjectPath(const Vector3d& pos,
+      const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>& cloud, bool extreme = false);
+  pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> last_over_depth_object_cloud_;
   // Exploration Policy
   void chooseExplorationPolicy(Vector2d cur_pos, vector<Vector2d> frontiers,
       Vector2d& next_best_pos, vector<Vector2d>& next_best_path);
@@ -146,7 +170,6 @@ private:
   double computePathCost(const Vector2d& pos1, const Vector2d& pos2);
   vector<Vector2i> allNeighbors(const Eigen::Vector2i& idx, int grid_radius);
 
-  ros::ServiceClient tsp_client_;         ///< ROS service client for TSP solver
   unique_ptr<RayCaster2D> ray_caster2d_;  ///< Ray casting for collision checking
   vector<TemporaryFrontierScore> temporary_frontier_scores_;
   double temporary_score_match_tolerance_{0.75};

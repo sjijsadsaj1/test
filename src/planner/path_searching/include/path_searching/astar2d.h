@@ -47,6 +47,7 @@ public:
   int astarSearch(const Eigen::Vector2d& start_pt, const Eigen::Vector2d& end_pt,
       double success_dist = 0.1, double max_time = 0.01, int safety_mode = SAFETY_MODE::NORMAL);
   void setResolution(const double& res);
+  void useDeterministicBudget(int expansions = 20000) { expansion_budget_ = expansions; }
   static double pathLength(const std::vector<Eigen::Vector2d>& path);
   std::vector<Eigen::Vector2d> generateSteps(Eigen::Vector2d pos);
 
@@ -78,6 +79,7 @@ private:
   // parameter
   double margin_;
   int allocate_num_;
+  int expansion_budget_{0};  // zero keeps wall-clock limits for real-world operation
   double resolution_, inv_resolution_;
   Eigen::Vector2d map_size_2d_, origin_;
 };

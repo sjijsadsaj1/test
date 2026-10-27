@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import os
 from vlm.itm.blip2itm import BLIP2ITMClient
 
 itmclient = BLIP2ITMClient(port=12182)
@@ -16,4 +17,7 @@ def get_itm_message_cosine(rgb_image, label, room):
     else:
         txt = f"Seems like there is a {label} ahead?"
     cosine = itmclient.cosine(rgb_image, txt)
+    if os.environ.get('APEXNAV_ROOM_PRIOR') == '1':
+        from vlm.utils.room_prior import score_with_rooms
+        cosine = score_with_rooms(rgb_image, label, float(cosine), itmclient.cosine)
     return cosine

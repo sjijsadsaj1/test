@@ -1,0 +1,36 @@
+{
+  "name": "mp3d_stable_sr20_20260910_runtime",
+  "dataset": "mp3d",
+  "split": "val",
+  "selection_version": 2,
+  "created_date": "2026-09-10",
+  "criteria": {
+    "source_manifest": "mp3d_random50_seed20260909_disjoint_runtime.json",
+    "method": "first 20 entries in the existing seeded random manifest, without outcome-based selection",
+    "sample_size": 20,
+    "purpose": "development reproducibility and paired comparison, not a new held-out test set",
+    "episode_id_semantics": "Habitat runtime per-scene index, not raw JSON episode_id"
+  },
+  "episodes": [
+    {"scene_key": "8194nk5LbLH", "episode_id": "189", "object_category": "plant"},
+    {"scene_key": "8194nk5LbLH", "episode_id": "88", "object_category": "chair"},
+    {"scene_key": "QUCTc6BB5sX", "episode_id": "89", "object_category": "table"},
+    {"scene_key": "EU6Fwq7SyZv", "episode_id": "136", "object_category": "chair"},
+    {"scene_key": "zsNo4HB9uLZ", "episode_id": "32", "object_category": "picture"},
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "57", "object_category": "table"},
+    {"scene_key": "Z6MFQCViBuw", "episode_id": "54", "object_category": "chair"},
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "11", "object_category": "cabinet"},
+    {"scene_key": "X7HyMhZNoso", "episode_id": "32", "object_category": "chair"},
+    {"scene_key": "zsNo4HB9uLZ", "episode_id": "29", "object_category": "picture"},
+    {"scene_key": "pLe4wQe7qrG", "episode_id": "57", "object_category": "table"},
+    {"scene_key": "x8F5xyUWy9e", "episode_id": "148", "object_category": "clothes"},
+    {"scene_key": "TbHJrupSAjP", "episode_id": "46", "object_category": "stool"},
+    {"scene_key": "QUCTc6BB5sX", "episode_id": "82", "object_category": "stool"},
+    {"scene_key": "Z6MFQCViBuw", "episode_id": "41", "object_category": "chair"},
+    {"scene_key": "oLBMNvg9in8", "episode_id": "165", "object_category": "fireplace"},
+    {"scene_key": "x8F5xyUWy9e", "episode_id": "73", "object_category": "cabinet"},
+    {"scene_key": "TbHJrupSAjP", "episode_id": "47", "object_category": "stool"},
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "68", "object_category": "chair"},
+    {"scene_key": "zsNo4HB9uLZ", "episode_id": "142", "object_category": "chest_of_drawers"}
+  ]
+}

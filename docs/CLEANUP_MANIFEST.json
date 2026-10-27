@@ -1,0 +1,720 @@
+{
+  "date": "2026-10-27",
+  "local_backup": "/data/wzy/apexnav/.local_archive/code_cleanup_20261027",
+  "moved_out_of_active_repository": [
+    {
+      "path": "docs/AVIC_INTEGRATION.zh-CN.md",
+      "sha256": "e0ee0be8a93f28aee11ce519f279c1c30c8d0f7a59f6b115b6f682b4a623ee77",
+      "bytes": 4736,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "docs/FIXED100_SR.zh-CN.md",
+      "sha256": "8d9f5f8d503e54ac6f36a67e81a3bbddb6746211a9810a0c4f9cb8f08bc8501d",
+      "bytes": 5356,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "docs/FRONTIER_CYCLE_MEMORY_EXPERIMENT.zh-CN.md",
+      "sha256": "d8afde72cfe218a38fc4528f66dfb6c5842acd223e9974737030189ff138cf3e",
+      "bytes": 10859,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "docs/IMAGE_GLM_BACKEND.zh-CN.md",
+      "sha256": "2ce9e68de38eab6df8af528b6533010d05fffbce4f38ef41bb8485f517aeb8e6",
+      "bytes": 7056,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "docs/IMAGE_INTERIOR_EXPERIMENT.zh-CN.md",
+      "sha256": "a39795cfec4dfee970170554566240391d3e70829a1d7ebb31dfa886452832e3",
+      "bytes": 5934,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "docs/archive/CURRENT_RESULTS.zh-CN.md",
+      "sha256": "8042335830baab70b9db30bf0f76ab342a66f921838fbc311c40f842dd796fff",
+      "bytes": 4513,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "docs/archive/CURRENT_ROUTE_VIEW_FIX_20260915.zh-CN.md",
+      "sha256": "429f86c6028435d9286f3233fe446d7529e4e5afebad481cff3d485788acc906",
+      "bytes": 7717,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "docs/archive/HYBRID_RULE_ROLLBACK_20260913.zh-CN.md",
+      "sha256": "2b1e3c9fc063e9d010e16602ca4cfdb6a9908b588e27b610be9517b5729c8792",
+      "bytes": 7026,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "docs/archive/STABLE_SR_PLAN.zh-CN.md",
+      "sha256": "c2b729a3e75a18ad7de53f3975c710c9011645557850ed1502f388e99d3ddeca",
+      "bytes": 41086,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "docs/archive/WORLD_MODEL_INTERFACE_AUDIT_20260914.zh-CN.md",
+      "sha256": "9d4a89a698eb519f4aa9244e73b4827f02fa9fbcc72194bd6015dde69be84caa",
+      "bytes": 9334,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/aligned_base_cases6.py",
+      "sha256": "4a40303421c476859fb4176bb1260ee3c413103f7c3dcf570b3cec59922ca7f9",
+      "bytes": 10308,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/archive_old_ros_logs.py",
+      "sha256": "5d53db2e0a24241ff8f98c05c0d9180b51a1cb37d130a4047a1152a0c8f42d83",
+      "bytes": 4019,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/audit_frontier_image_alignment.py",
+      "sha256": "1cf66cd2b061e868c9721556fc673d2998e996684880c324257dd17ed876b22e",
+      "bytes": 23189,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/audit_svc_generation_reuse.py",
+      "sha256": "e95e62306d3fe52fa3a6524901aff892c50dd1dc5e9557276c2b58ea23c4a0d8",
+      "bytes": 3837,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/audit_world_model_interfaces.py",
+      "sha256": "2b846985e3a9c384346a4102ab7332955feb6a8c1bda4cd09516dbd9d8932ebe",
+      "bytes": 3197,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/blank_prompt_suite.py",
+      "sha256": "4f1e50db698a39dd9fa37226493698c4abcbac7e61a024a880c46a9d969459af",
+      "bytes": 7566,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/check_frontier_geometry_crop.py",
+      "sha256": "5cef959338a60431a47a1336a9cd938598350bf84072200510b31fa1237b3328",
+      "bytes": 1607,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/compare_doorway_prompts.py",
+      "sha256": "acc69de4b2d483e9064a2c2df04ff09dae441527780696bcee8120a077ee2124",
+      "bytes": 8950,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/diagnose_image_glm_api.py",
+      "sha256": "1c3a034cc3dc65c0c163bb2916899ff341478fd8f274cdd152e861cf8cb0342c",
+      "bytes": 2123,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/doorway_prompts.py",
+      "sha256": "d8ee45b0cf8d02becc0d2af5c799a1bf18e5dd7f02c41a41cc700496ded1bebe",
+      "bytes": 800,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/download_image_encoder_mirror.py",
+      "sha256": "1cebcc38ef8064728a76675863d1688c9a7e01b69481e9c2bdd4e9f285d4e298",
+      "bytes": 3004,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/extreme_safety_batch.py",
+      "sha256": "c289d3fefcbde70f4649bbd555813dcd4c4fec87096e534e022cea3d59a42135",
+      "bytes": 4097,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/frontier_alignment_batch.py",
+      "sha256": "4335101398f983c338dff94dd4a6b91d868ed45b2a6b3f6131c31a31ea0b5d53",
+      "bytes": 11852,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/frontier_cycle_batch.py",
+      "sha256": "9f6e756291b32cc7bf5eb310ef0bddd377fa31fdd8eab3f45704730fe2082143",
+      "bytes": 9551,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/frontier_cycle_memory_fixture.cpp",
+      "sha256": "ea70dabf0ebe66a053fca764593c386b734da218e133be98197708925ef33df2",
+      "bytes": 2818,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/image_glm_batch.py",
+      "sha256": "9f74f89a97c23128c386ba89b8f6a543d806f17901087791c9d0e23f6d7cc607",
+      "bytes": 17442,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/imagine_doorway.py",
+      "sha256": "c0dd0395771a4f26bfb4dd721423fcadd408ff782203e0f44f7693e88806baed",
+      "bytes": 7451,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/imagine_two_branches.py",
+      "sha256": "3c2e2178cbb52b9c864a9b3a6686ae1a93988c3c3e3f01315239dac651d6cf7f",
+      "bytes": 9659,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/literature_nav_pilot.py",
+      "sha256": "064fddffff8820d5751fe2825a4a4f8b545afeaa884c726421c27fa36e191668",
+      "bytes": 4365,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/make_frontier_once10.py",
+      "sha256": "f4bb9a4c48399b1899d37a848f4dd9dc14bea6488de038ffa2c0175e35cd7a59",
+      "bytes": 3119,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/open_space_batch.py",
+      "sha256": "a00ea5dfeb78a36588dbf3b4744efb107dc18fdd77633368184ca5b6c1e28efb",
+      "bytes": 5495,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/prepare_image_glm_model.py",
+      "sha256": "d3379b7363bb057d737405434a6b0cc307d7c120d41017370566234e912899fc",
+      "bytes": 2073,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/prepare_v1_policy.py",
+      "sha256": "832863ecad17fd232d7541ca9c372dc8222461bf0182bb21f2a161148250d46c",
+      "bytes": 6267,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/probe_detection_regression.py",
+      "sha256": "3c04f34d293674c78688b56bd36ef2bee9b1add5831df33233ad403027a1bbab",
+      "bytes": 1748,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/probe_interior_api.py",
+      "sha256": "c3371dae40758228bf563b70e89f03cddf7dc4a9242ea420258b6bb19c4a2f04",
+      "bytes": 2183,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/probe_literature_methods.py",
+      "sha256": "394168b0e8659adc17e7b32694d9d0bb3fb611765dc1283b73dbf359e0ab6e88",
+      "bytes": 4055,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/probe_local_interior.py",
+      "sha256": "02f234759f9df17e2c11d3f65f74c3f2fe16c5afb4147b472bfb896eb9e4c695",
+      "bytes": 2177,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/probe_loop_memory.py",
+      "sha256": "d8a76a43139c5ae5685dc9a5b0ed3602961256fd68d98e3f776db84bb7314c35",
+      "bytes": 3177,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/probe_text_frontier.py",
+      "sha256": "305b44bc777f76421905a484f0eff01bebca831f01ce1eb02a422f507cfb0c81",
+      "bytes": 3061,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/recovery_class_batch.py",
+      "sha256": "1767abd9982758be49656dae90d5ad94872007018940c35406cc7c2bdc972444",
+      "bytes": 6254,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/recovery_handoff_fixture.cpp",
+      "sha256": "1a7b028031f117c3032a38b7003c9ef7341d5ad39c128afe74517789a4a92b8b",
+      "bytes": 980,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/relaxed_imagination_batch.py",
+      "sha256": "d1c694e0c41ce6e2714054dafdf436e41303109316aee5d23909649e2a972b22",
+      "bytes": 9987,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/replay_interior_crops.py",
+      "sha256": "3a5b96fc361cccf573c0b1165881c33a457378ec5d00f66837c10659ac6804d1",
+      "bytes": 5004,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/replay_semantic_interior.py",
+      "sha256": "ad82c9a8117343cdad0414b7f4a21dcededaacabff68e053d8928aad6a47a2ca",
+      "bytes": 10441,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_aligned_base_cases30.sh",
+      "sha256": "49aef1ac51fc5318adefcfc5bca44e237a21e4e8097baae7cae639be16f1ba20",
+      "bytes": 305,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_aligned_base_cases6.sh",
+      "sha256": "816c347d2dddfbe0b810304efd50ea351b6f40eccc7fc395ae226e9a1e7673a1",
+      "bytes": 4995,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_doorway_comparison.sh",
+      "sha256": "8fd6662b5f3042bdfd75137418f20e4a21018422ad06ad16e2623454d65c0ecd",
+      "bytes": 508,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_doorway_imagination.sh",
+      "sha256": "4a40b0d9e92715bb7f8f9fa5d3361d8a9574f9eef42f000ed4381591c8d7731d",
+      "bytes": 619,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_extreme_safety30.sh",
+      "sha256": "b850cb5971baf144d8e35c33fefc399069c3acd085fbc3eeccd99001eb78cbfb",
+      "bytes": 2712,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_fixed100.sh",
+      "sha256": "7cccb599ded113c579805d4ae6cc4ef4d4890081f1156343439db8e9e2dea85b",
+      "bytes": 1904,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_frontier_alignment.sh",
+      "sha256": "6a87122a03706f1b766ab569e68f94755833fd34cbee3ee7cb5c7c4aa07b8a31",
+      "bytes": 5876,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_frontier_cycle_memory30.sh",
+      "sha256": "ba8caf56acfb6907bc1dfa3b366fd8d85c4485131e3848f80cb50052c2aaae6a",
+      "bytes": 5086,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_frontier_once10.sh",
+      "sha256": "e0d9e2b849abcc317718fcc3af3bbbe1952d17db445eae45b9a851cb95d4b7b3",
+      "bytes": 4789,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_frontier_once30.sh",
+      "sha256": "941963b2d338a58ceb51d5d7aaeacd6fe682a409f996cef61f945f2e5666dd57",
+      "bytes": 180,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_frontier_refresh30.sh",
+      "sha256": "4a0a8cb2d7b883acc29fb6bd2ec47ada0ce6ce0051199a38a6007d49be9a928f",
+      "bytes": 324,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_historical_rescues9.sh",
+      "sha256": "5e74a242663f4d93d166d5fe977fad917dda6ce172dcc28b8c307e4aa4b5f8fa",
+      "bytes": 1386,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_image_dual_context.sh",
+      "sha256": "6778bb7cf293686bf4b468edd433067fdd53992f9f7082042e4205ea4608976b",
+      "bytes": 215,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_image_frontier_geometry.sh",
+      "sha256": "b5bff9504546d629e2c1a661f4130c9ce011d5c03548b9690ed7626c09c0fd20",
+      "bytes": 437,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_image_glm10.sh",
+      "sha256": "5d74a1cf8f7785df8a0fcebce20fb8cd36581cca846e708d63c3d77424f8e327",
+      "bytes": 10178,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_image_glm_strong.sh",
+      "sha256": "1535ca5aad1776d591cd2f27d26ffaaa134589dd4aab4557f016cca8849bfde0",
+      "bytes": 375,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_image_interior.sh",
+      "sha256": "faadb66000c60621b5ab09ad2088d64f96006d597eafb1bc49c5e83e06e3cf2a",
+      "bytes": 296,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_image_interior_bundled.sh",
+      "sha256": "1c5ecd73426293cee524a3e3748c93700b6d47332210a02783da94307587cd8f",
+      "bytes": 385,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_image_interior_local.sh",
+      "sha256": "ab1314f39ce640a6dded8a38f90468708f79c75139587a4fb0099ad684bb0519",
+      "bytes": 351,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_image_interior_semantic.sh",
+      "sha256": "71d93887b2f177b612d6c5ba9404da2c4b98733e5e61dacb41355f48688b127c",
+      "bytes": 387,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_image_interior_smoke.sh",
+      "sha256": "5315abf5260a152e39dede1932474572b3bf861579c66044c5dc5641170cba87",
+      "bytes": 352,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_image_interior_v2.sh",
+      "sha256": "ce94bbfe80c55929ad9f276cc6ccdd9d9a271cd960521891c11d81c983f19c41",
+      "bytes": 325,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_interior_api_probe.sh",
+      "sha256": "cc36e613dc73c64b1357896c3eb2c933499492d0ebc44b641336a75c968d8584",
+      "bytes": 315,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_literature_nav_pilot.sh",
+      "sha256": "3b5d0e81f53dca173da561637757dfcec31fd39029c79849d579eab257592525",
+      "bytes": 2328,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_open_space_trial.sh",
+      "sha256": "0ad93d1a22ec3d8a2bd013b0e847bd54da7535f52cad0a56aae6333850ae895f",
+      "bytes": 2774,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_random50_20260919.sh",
+      "sha256": "27567a6308b04b37712cc3353dbf52d124067dff57665c191af5cada7cbdf98f",
+      "bytes": 2281,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_recovery100.sh",
+      "sha256": "bf2c3c0b696202c84700ca7da55d237d29ffa290dce7f056ad82ce6a9042eb4c",
+      "bytes": 1797,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_recovery_class.sh",
+      "sha256": "8e030621841e58b37ee84e346997ac3fd2fce3e80f4051c62ff6c9da1a27729e",
+      "bytes": 2567,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_relaxed_imagination30.sh",
+      "sha256": "09e6db4206cc47f89666f6e4990df6857cec5a5ff89a142f3880ba73b3afc15c",
+      "bytes": 5937,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_sr_candidates.sh",
+      "sha256": "dd41cee58f3ccf7ef245ba4ae8ecd01d91a2351ca9fbcb90bc28042dd930f5c2",
+      "bytes": 3068,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_stable_sr20.sh",
+      "sha256": "fa4103c8212635f57fd51e0d929feac2553dea4990a63d01bc1a32a235fd831d",
+      "bytes": 994,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_target_alias_pilot.sh",
+      "sha256": "42f430cbacbd966fcdd502fc15e220f0209b4836d80da4a6ebaf02654d6e0056",
+      "bytes": 2772,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_target_confirmation50.sh",
+      "sha256": "8d5fed674e019dc21216020bf0b80f892b1549c63893f4f9d9cbbd0cb4792161",
+      "bytes": 4149,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_text_frontier.sh",
+      "sha256": "1c1d6f4f1a60b157e1f441d2dc48d0f0fe56ebaa3b75f76242c172f2bed005ac",
+      "bytes": 4442,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_two_branch_imagination.sh",
+      "sha256": "7886e2e4cb921fb9f9d6d27345f475da9c8815645b137cfe10405283b8a0c7da",
+      "bytes": 505,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_v1_images.sh",
+      "sha256": "22e7b145bfdae8538c8f9473a5bd8167356b0d8ba65cd4fa311a5c96a55be24f",
+      "bytes": 7462,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_v1_policy100.sh",
+      "sha256": "261449c88e1fdacddd0a7e96e27b78ca9360b281f719049f4badbab0b069a22d",
+      "bytes": 3200,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_vivid_doorway.sh",
+      "sha256": "d31670ed455348a0b3bd98bf55219822075df51f1e31efb8492428c17fe06072",
+      "bytes": 213,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/run_worldmodel100.sh",
+      "sha256": "2fd796a7e56a97dff50455ebfb90890d272cfcc6ea422576fb7d67d2a86305a5",
+      "bytes": 2018,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/setup_image_glm.sh",
+      "sha256": "362537b48cd09a90cad5e8826e6ebe9d07200319f4ed53b37f9c020d9155cd92",
+      "bytes": 799,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/smoke_image_glm.py",
+      "sha256": "498f164f17dee00373c16e08485eba22da21aad3d086e6b83da50ea23e22dd42",
+      "bytes": 4019,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/smoke_image_interior.py",
+      "sha256": "202f5f3044a7d184ad071027cf32b476727b6ae7011a5f4596961d6984099dfc",
+      "bytes": 7941,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/sr_candidates_batch.py",
+      "sha256": "e192e99c6f353a1e4509ce7dd3dc28577f8a08705d7d8935c02a4b2b8da81c94",
+      "bytes": 7328,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/target_alias_batch.py",
+      "sha256": "1eb076f4096f87d4ad447f15a0bea89feb977fb8a71020a095f311245ec5cd7a",
+      "bytes": 5494,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_aligned_base_cases6.py",
+      "sha256": "005610c26673b538f8bfe2236c8847a1f4c1de12e70c856ce72373328658b8b2",
+      "bytes": 5677,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_aligned_base_experiment.py",
+      "sha256": "eb45d648d30ba81004b9243d520738ee5249b2179e86a89b85f81866f7cc57c8",
+      "bytes": 4215,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_audit_frontier_image_alignment.py",
+      "sha256": "8a3502104a7122cff37e5001d1123fd2e1604b48ecb286703063d93d8f5c38b1",
+      "bytes": 6195,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_doorway_imagination.py",
+      "sha256": "c8bbad42ed85dd91e2209d451cb5de7301a79eb202d9228aa2d22da633bf0358",
+      "bytes": 1694,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_extreme_safety_batch.py",
+      "sha256": "184b8ec8afc7473cd058539a3f857b3c4ea29ae93a8d165b749e3cde26302f2c",
+      "bytes": 2337,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_frontier_alignment_batch.py",
+      "sha256": "8096d1956e1ea741238711ddc4484af711c60ca26a6537ee51f1dec9cd43ceea",
+      "bytes": 6954,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_frontier_cycle_batch.py",
+      "sha256": "4d612a21e5cd5c3fae3c20f7d2cb9deabf90ac3fe1145f5f0be7cc9d76c8e128",
+      "bytes": 6161,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_frontier_cycle_memory.py",
+      "sha256": "3dcaace01d8ea554057a7dccc4f510c57f01e09e638957c91086dc90496beab4",
+      "bytes": 1124,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_frontier_geometry.py",
+      "sha256": "34e92d7bac655aef23c1008d68639b622a4bbac9daa18bc0fa61c62cb5d296f8",
+      "bytes": 10735,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_hypothesis_progress.cpp",
+      "sha256": "4b97e91c051d78a1e60afef57934769fc9942453f5e407c8b528345abcf91348",
+      "bytes": 1126,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_image_glm_backend.py",
+      "sha256": "cbfe69c71a30c09d8bee52bad2005ef1059c87b0f5508b72cf2da21631c7d2ee",
+      "bytes": 18878,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_image_glm_batch.py",
+      "sha256": "0b4a117f5cdd2ca8a50f14957a5b4a535069ca592925c38fe4858fa104024ec4",
+      "bytes": 10945,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_interior_reference.py",
+      "sha256": "563a660b5eb74c50cf057016e2a15a92c8519a5de9c8e1eafea542a1eabf9e5b",
+      "bytes": 8051,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_local_interior.py",
+      "sha256": "bc511350adfa63385d164f28fa19b8eb8840b0d3c8adfe837d746f2fdf378412",
+      "bytes": 8142,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_local_semantic_client.py",
+      "sha256": "689aee85358e6b71539b2fd5b2b88922f4390d9d4c0aed86dd9cdca7b4eb5870",
+      "bytes": 3364,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_relaxed_imagination.py",
+      "sha256": "c658785a692492f323caa4baf54141f0f536ac33d8dc27120dac2ef7f3309284",
+      "bytes": 9282,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_relaxed_imagination_batch.py",
+      "sha256": "04500ccfb9e5d83a90b3fac26f5f82806217918222ed76f9a5dc33bf36f5bfb2",
+      "bytes": 5425,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_response_replay.py",
+      "sha256": "453111335cc704c21a998abe8620c999f70d1233f0c7fe69e67451c4e900cbf0",
+      "bytes": 4556,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_semantic_interior.py",
+      "sha256": "b5275cf1aca19c54e71f78a32ed762640e23a88ece6eddbc088d74bd8e63662e",
+      "bytes": 4232,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_sr_candidates.py",
+      "sha256": "ea8cfc5cb533b28a773bc6137e0a57ca4e6a43d43aa2105bba0ccf31a7ce357f",
+      "bytes": 1143,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_target_aliases.py",
+      "sha256": "7a629a38e44ea9a46494718269b18364bc5d6d8f83f71d95a62e1473fa2166c2",
+      "bytes": 3749,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_target_phrase_match.py",
+      "sha256": "a801d769ffa324609300e0eb85dcc455d47f803ebe11d06680be92bf04f22460",
+      "bytes": 1081,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_text_frontier.py",
+      "sha256": "e1d101fd733916e74315b1d86fb549689f931d101bfcd678facbd313b98e7590",
+      "bytes": 6921,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/test_vivid_geometry.py",
+      "sha256": "f12b1d6016c1895a45f9a4e29b15d4c3831623493260028638fe71c5a29645a3",
+      "bytes": 948,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/text_frontier_batch.py",
+      "sha256": "67c0d45e5761fb0f0ae015b00ca6692dbf602fdeeac38842fafef04436883680",
+      "bytes": 5963,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/trial_avic_qwen.py",
+      "sha256": "14053988e3d79e5b5d2ff7e0c4dccd22334c2900a3b0f33d6e941211d1bbef56",
+      "bytes": 17848,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/v1_semantic_policy.patch",
+      "sha256": "e4ae3d9b78b54421dd58f0001cc8b4174a9d2c819ea89564618ee24129debf1f",
+      "bytes": 2718,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/verify_v1_images_run.py",
+      "sha256": "85b6d5e9a72d74d75886d93b38e94b52956a7199af7640ec7f6e26953b8d500a",
+      "bytes": 1130,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/verify_v1_policy_run.py",
+      "sha256": "0fd174a80b41265a720412d0ec08e5023cc83a427c63a2f52a891831104ac27f",
+      "bytes": 813,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "scripts/vivid_doorway.py",
+      "sha256": "969626a348d2b50ba3e47b927efa3f2a0f742bfef234a5e1028eb0e9d61b9dcd",
+      "bytes": 8700,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    },
+    {
+      "path": "tests/test_trial_avic_qwen.py",
+      "sha256": "a51db43c75c89e0e123d2558f8f6340c29a6df9708dc191cff6cc2210f8d53e4",
+      "bytes": 3751,
+      "reason": "Retired historical experiment entry/test/document; retained in local pre-cleanup backup."
+    }
+  ]
+}

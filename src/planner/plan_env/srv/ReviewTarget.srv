@@ -1,0 +1,15 @@
+# Transaction-bound review of a REAL object instance. 0 inspect, 1 reject,
+# 2/3 bounded in-place left/right observation. No forward or STOP command.
+string episode
+uint32 step
+int32 operation
+int32 instance_id
+---
+bool accepted
+string reason
+int32 instance_id
+float64[] bounds
+int32[] detection_instances
+int32 action
+int32 final_state
+int32 exploration_result

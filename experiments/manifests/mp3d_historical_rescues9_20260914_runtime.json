@@ -1,0 +1,22 @@
+{
+  "name": "mp3d_historical_rescues9_20260914_runtime",
+  "dataset": "mp3d",
+  "purpose": "Outcome-selected diagnostic set, NOT an unbiased SR benchmark or proof of world-model causality.",
+  "episode_id_semantics": "Habitat per-scene array index; categories are raw runtime categories, not display aliases.",
+  "selection": "All nine baseline-failure/AVIC-success cases from the two historical +6/+8 percentage-point groups.",
+  "source_pairs": [
+    {"baseline": "experiments/runs/paired50_mp3d/apexnav/20260906_005305/record.txt", "avic": "experiments/runs/paired50_mp3d/avic/20260906_021801/record.txt"},
+    {"baseline": "experiments/runs/paired50_mp3d_random_seed20260906/apexnav/20260906_145422/record.txt", "avic": "experiments/runs/paired50_mp3d_random_seed20260906/avic/20260906_165041/record.txt"}
+  ],
+  "episodes": [
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "9", "object_category": "cabinet"},
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "15", "object_category": "cabinet"},
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "18", "object_category": "cabinet"},
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "30", "object_category": "cabinet"},
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "33", "object_category": "cabinet"},
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "165", "object_category": "toilet"},
+    {"scene_key": "TbHJrupSAjP", "episode_id": "123", "object_category": "cushion"},
+    {"scene_key": "x8F5xyUWy9e", "episode_id": "68", "object_category": "cabinet"},
+    {"scene_key": "Z6MFQCViBuw", "episode_id": "58", "object_category": "chair"}
+  ]
+}

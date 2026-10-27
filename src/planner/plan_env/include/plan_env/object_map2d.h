@@ -122,6 +122,13 @@ public:
   int getObjectGrid(const Eigen::Vector2d& pos);
   int getObjectGrid(const Eigen::Vector2i& id);
   int getObjectGrid(const int& adr);
+  int reviewInstance(const pcl::PointCloud<pcl::PointXYZ>& cloud);
+  bool reviewBounds(int id, Vector3d& lower, Vector3d& upper) const;
+  void reviewStep(int step) { review_step_=step; }
+  void reviewReject(int id) { review_until_[id]=review_step_+60; }
+  bool reviewExcluded(int id) const {
+    auto it=review_until_.find(id);return it!=review_until_.end() && review_step_<it->second;
+  }
 
   void publishObjectClouds();
   void wrapYaw(double& yaw);
@@ -130,6 +137,8 @@ public:
   pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> over_depth_object_cloud_;
 
 private:
+  int review_step_{0};
+  std::unordered_map<int,int> review_until_;
   double fusionConfidenceScore(
       int total_last, double c_last, int n_now, double c_now, int total_now, int sum);
   void updateObjectBestLabel(int obj_idx);

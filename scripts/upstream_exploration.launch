@@ -1,0 +1,17 @@
+<launch>
+  <!-- Only fix configuration lookup. All planner parameters/nodes come from upstream. -->
+  <arg name="eval_config" />
+  <rosparam file="$(arg eval_config)" command="load" />
+  <include file="$(find exploration_manager)/launch/algorithm.xml">
+    <arg name="is_real_world_" value="false" />
+    <arg name="map_size_x_" value="80.0" />
+    <arg name="map_size_y_" value="80.0" />
+    <arg name="odometry_topic_" value="/habitat/odom" />
+    <arg name="sensor_pose_topic_" value="/habitat/sensor_pose" />
+    <arg name="depth_topic_" value="/habitat/camera_depth" />
+    <arg name="cx_" value="320" />
+    <arg name="cy_" value="240" />
+    <arg name="fx_" value="388.1910413097385" />
+    <arg name="fy_" value="422.0475153598262" />
+  </include>
+</launch>

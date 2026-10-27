@@ -10,21 +10,47 @@
 
 #include <exploration_manager/exploration_manager.h>
 #include <exploration_manager/exploration_data.h>
+#include <exploration_manager/tsp_service.h>
 #include <lkh_mtsp_solver/SolveMTSP.h>
 #include <plan_env/map_ros.h>
 #include <path_searching/kino_astar.h>
 #include <trajectory_manager/optimizer.h>
 
 #include <algorithm>
+#include <cstdlib>
+#include <queue>
+#include <set>
 
 using namespace Eigen;
 
 namespace apexnav_planner {
+namespace {
+bool textFrontierEnabled() {
+  const char* flag=std::getenv("APEXNAV_TEXT_FRONTIER");
+  return flag && std::string(flag)=="1";
+}
+bool imageGLMStrongRequested() {
+  const char* flag=std::getenv("APEXNAV_IMAGE_GLM_STRONG");
+  return flag && std::string(flag)=="1";
+}
+bool imageGLMStrongEnabled() {
+  const char* flag=std::getenv("APEXNAV_IMAGE_GLM");
+  return imageGLMStrongRequested() && flag && std::string(flag)=="1";
+}
+}
 
 ExplorationManager::~ExplorationManager() = default;
 
 void ExplorationManager::initialize(ros::NodeHandle& nh)
 {
+  const bool dictionary_mode=std::getenv("APEXNAV_TEXT_METHOD") && std::string(std::getenv("APEXNAV_TEXT_METHOD"))=="dictionary";
+  ROS_INFO("[TEXT_FRONTIER_CONFIG] enabled=%d contract=%s",textFrontierEnabled(),
+      dictionary_mode ? "frontier_object_marginals_v1" : "text_frontier_belief_v1");
+  ROS_INFO("[IMAGE_GLM_STRONG_CONFIG] enabled=%d requested=%d contract=image_glm_strong_semantic_v1 scope=current_temporary_score_request",
+      imageGLMStrongEnabled(),imageGLMStrongRequested());
+  cycle_memory_.reset();
+  ROS_INFO("[FRONTIER_CYCLE_CONFIG] enabled=%d robot_m=0.5 candidate_m=0.5 score_delta=0.01 min_steps=12 max_history=512",
+      cycleMemoryEnabled());
   // Initialize SDF map and get object map reference
   sdf_map_.reset(new SDFMap2D);
   sdf_map_->initMap(nh);
@@ -54,7 +80,6 @@ void ExplorationManager::initialize(ros::NodeHandle& nh)
   // Initialize ray caster for collision checking and TSP service client
   ray_caster2d_.reset(new RayCaster2D);
   ray_caster2d_->setParams(resolution, origin);
-  tsp_client_ = nh.serviceClient<lkh_mtsp_solver::SolveMTSP>("/solve_tsp", true);
 
   // Initialize KinoAstar and GCopter for real-world trajectory planning
   kinoastar_.reset(new KinoAstar(nh, sdf_map_));
@@ -66,8 +91,216 @@ void ExplorationManager::initialize(ros::NodeHandle& nh)
   ROS_INFO("[ExplorationManager] KinoAstar and GCopter initialized for real-world mode");
 }
 
+bool ExplorationManager::cycleMemoryEnabled() const {
+  const char* flag=std::getenv("APEXNAV_FRONTIER_CYCLE_MEMORY");
+  return flag && std::string(flag)=="1";
+}
+
+bool ExplorationManager::realCycleContext(FrontierCycleMemory::Point& context) {
+  vector<double> values;
+  for(const auto& frontier:ed_->frontier_averages_) {
+    Vector2i idx;sdf_map_->posToIndex(frontier,idx);
+    double value=sdf_map_->value_map_->getValue(idx);
+    for(const auto& nbr:allNeighbors(idx,2)) {
+      if(sdf_map_->getInflateOccupancy(nbr)==1 || sdf_map_->getOccupancy(nbr)==SDFMap2D::OCCUPIED)continue;
+      value=std::max(value,sdf_map_->value_map_->getValue(nbr));
+    }
+    if(!std::isfinite(value))return false;
+    values.push_back(value);
+  }
+  if(values.empty())return false;
+  std::sort(values.begin(),values.end(),std::greater<double>());
+  context={{values[0],values.size()>1?values[1]:values[0]}};return true;
+}
+
+bool ExplorationManager::cycleDecision(const Vector2d& robot,const Vector2d& goal,int step,int action,
+    FrontierCycleMemory::Decision& decision) {
+  if(!cycleMemoryEnabled())return false;
+  const Vector2d* nearest=nullptr;double distance=.5+1e-12;
+  for(const auto& candidate:ed_->frontier_averages_)
+    if((candidate-goal).norm()<=distance) {distance=(candidate-goal).norm();nearest=&candidate;}
+  FrontierCycleMemory::Point context;
+  if(!nearest || !realCycleContext(context))return false;
+  decision={{{robot.x(),robot.y()}},{{nearest->x(),nearest->y()}},context,step,action};return true;
+}
+
+void ExplorationManager::confirmCycleDecision(int previous_step,int executed_action,const std::string& episode) {
+  if(!cycleMemoryEnabled())return;
+  const auto d=cycle_memory_.pending();
+  if(cycle_memory_.confirm(previous_step,executed_action))
+    ROS_INFO("[FRONTIER_CYCLE] stage=commit episode=%s step=%d robot=(%.3f,%.3f) candidate=(%.3f,%.3f) top2=(%.6f,%.6f) history=%zu",episode.c_str(),previous_step,
+        d.robot[0],d.robot[1],d.candidate[0],d.candidate[1],d.context[0],d.context[1],cycle_memory_.size());
+}
+
+void ExplorationManager::stageCycleDecision(const Vector2d& robot,int step,int action,const std::string& episode) {
+  if(!cycleMemoryEnabled())return;
+  FrontierCycleMemory::Decision d;
+  if(action<=0 || !cycleDecision(robot,ed_->next_pos_,step,action,d)) {
+    cycle_memory_.clearPending();
+    ROS_INFO("[FRONTIER_CYCLE] stage=skip_association episode=%s step=%d goal=(%.3f,%.3f)",episode.c_str(),step,ed_->next_pos_.x(),ed_->next_pos_.y());return;
+  }
+  if(cycle_memory_.continuing(d))
+    ROS_INFO("[FRONTIER_CYCLE] stage=continue episode=%s step=%d robot=(%.3f,%.3f) candidate=(%.3f,%.3f) top2=(%.6f,%.6f)",
+        episode.c_str(),step,robot.x(),robot.y(),d.candidate[0],d.candidate[1],d.context[0],d.context[1]);
+  cycle_memory_.stage(d);
+}
+
+bool ExplorationManager::rejectCycleGoal(const Vector2d& robot,int step,const std::string& episode) {
+  FrontierCycleMemory::Decision d;
+  if(!cycleDecision(robot,ed_->next_pos_,step,1,d))return false;
+  const bool cyclic=cycle_memory_.cyclic(d);
+  if(cyclic)ROS_INFO("[FRONTIER_CYCLE] stage=avic_reject_context episode=%s step=%d robot=(%.3f,%.3f) candidate=(%.3f,%.3f) top2=(%.6f,%.6f)",
+      episode.c_str(),step,robot.x(),robot.y(),d.candidate[0],d.candidate[1],d.context[0],d.context[1]);
+  return cyclic;
+}
+
+void ExplorationManager::suppressCycleGoal(const Vector2d& robot,int step,const std::string& episode) {
+  if(!cycleMemoryEnabled())return;
+  FrontierCycleMemory::Decision original;
+  if(!cycleDecision(robot,ed_->next_pos_,step,1,original)) {
+    ROS_INFO("[FRONTIER_CYCLE] stage=skip_association episode=%s step=%d",episode.c_str(),step);return;
+  }
+  if(!cycle_memory_.cyclic(original))return;
+  const Vector2d old_goal=ed_->next_pos_;const auto old_path=ed_->next_best_path_;const auto old_tour=ed_->tsp_tour_;
+  vector<Vector2d> candidates;
+  for(const auto& candidate:ed_->frontier_averages_) {
+    FrontierCycleMemory::Decision d={original.robot,{{candidate.x(),candidate.y()}},original.context,step,1};
+    if(!cycle_memory_.cyclic(d))candidates.push_back(candidate);
+  }
+  Vector2d goal=old_goal;vector<Vector2d> path;bool replaced=false;
+  if(!candidates.empty()) {
+    try {
+      ed_->tsp_tour_.clear();
+      chooseExplorationPolicy(robot,candidates,goal,path);
+      FrontierCycleMemory::Decision d;
+      replaced=!path.empty() && cycleDecision(robot,goal,step,1,d) && !cycle_memory_.cyclic(d);
+    } catch(const std::exception& exc) {
+      ed_->next_pos_=old_goal;ed_->next_best_path_=old_path;ed_->tsp_tour_=old_tour;
+      ROS_ERROR("[FRONTIER_CYCLE] stage=policy_error episode=%s step=%d restored=1 error=%s",episode.c_str(),step,exc.what());
+      throw;
+    }
+  }
+  if(replaced) {ed_->next_pos_=goal;ed_->next_best_path_=path;}
+  else {ed_->next_pos_=old_goal;ed_->next_best_path_=old_path;ed_->tsp_tour_=old_tour;}
+  ROS_INFO("[FRONTIER_CYCLE] stage=%s episode=%s step=%d robot=(%.3f,%.3f) original=(%.3f,%.3f) candidate=(%.3f,%.3f) final=(%.3f,%.3f) top2=(%.6f,%.6f) filtered=%zu",
+      replaced?"suppress":"fallback",episode.c_str(),step,robot.x(),robot.y(),old_goal.x(),old_goal.y(),original.candidate[0],original.candidate[1],
+      ed_->next_pos_.x(),ed_->next_pos_.y(),original.context[0],original.context[1],ed_->frontier_averages_.size()-candidates.size());
+}
+
+bool ExplorationManager::recoveryPath(const Vector2d& pos, const Vector2d& goal,
+    bool alternate, Vector2d& selected, vector<Vector2d>& path)
+{
+  path.clear();
+  if (!alternate) return searchFrontierPath(pos, goal, selected, path) && !path.empty();
+  vector<Vector2d> candidates;
+  for (const auto& frontier : ed_->frontier_averages_)
+    if ((frontier - goal).norm() > 0.5) candidates.push_back(frontier);
+  if (candidates.empty()) return false;
+  // Same configured policy and real map; no score/map writes, no object fallback.
+  const auto saved_tour = ed_->tsp_tour_;
+  chooseExplorationPolicy(pos, candidates, selected, path);
+  ed_->tsp_tour_ = saved_tour;
+  return !path.empty() && (selected - goal).norm() > 0.5;
+}
+
+bool ExplorationManager::recoveryToPoint(const Vector2d& pos, const Vector2d& goal,
+    vector<Vector2d>& path)
+{
+  path.clear();
+  if (sdf_map_->getOccupancy(goal)!=SDFMap2D::FREE || sdf_map_->getInflateOccupancy(goal)==1)
+    return false;
+  path_finder_->reset();
+  if(path_finder_->astarSearch(pos,goal,0.15,0.05)!=Astar2D::REACH_END) return false;
+  path=path_finder_->getPath();
+  return !path.empty();
+}
+
+// TriHelper-inspired retreat. Only the observed, robot-connected free component;
+// never use a privileged simulator map or a centroid inside an obstacle.
+bool ExplorationManager::openSpaceRecovery(const Vector2d& pos, Vector2d& goal,
+    vector<Vector2d>& path)
+{
+  Vector2i start; sdf_map_->posToIndex(pos,start);
+  std::queue<Vector2i> queue;
+  std::set<int> visited;
+  queue.push(start); visited.insert(sdf_map_->toAddress(start));
+  vector<Vector2d> cells;
+  const Vector2i delta[4]={Vector2i(1,0),Vector2i(-1,0),Vector2i(0,1),Vector2i(0,-1)};
+  while(!queue.empty() && visited.size()<40000) {
+    const Vector2i id=queue.front();queue.pop();
+    Vector2d point;sdf_map_->indexToPos(id,point);
+    if(sdf_map_->getOccupancy(id)==SDFMap2D::FREE && sdf_map_->getInflateOccupancy(id)!=1)
+      cells.push_back(point);
+    for(const auto& offset:delta) {
+      Vector2i next=id+offset;
+      if(!sdf_map_->isInMap(next))continue;
+      Vector2d p;sdf_map_->indexToPos(next,p);
+      if((p-pos).norm()>6. || sdf_map_->getOccupancy(next)!=SDFMap2D::FREE ||
+          sdf_map_->getInflateOccupancy(next)==1)continue;
+      if(visited.insert(sdf_map_->toAddress(next)).second)queue.push(next);
+    }
+  }
+  if(cells.empty())return false;
+  Vector2d centroid=Vector2d::Zero();for(const auto& p:cells)centroid+=p;
+  centroid/=double(cells.size());
+  vector<Vector2d> candidates;
+  for(const auto& p:cells)
+    if((p-pos).norm()>=0.75 && sdf_map_->getDistance(p)>=0.3)candidates.push_back(p);
+  std::sort(candidates.begin(),candidates.end(),[&](const Vector2d& a,const Vector2d& b){
+    const double x=(a-centroid).squaredNorm(),y=(b-centroid).squaredNorm();
+    if(x!=y)return x<y;
+    return a.x()!=b.x()?a.x()<b.x():a.y()<b.y();
+  });
+  for(size_t i=0;i<std::min<size_t>(20,candidates.size());++i) {
+    if(recoveryToPoint(pos,candidates[i],path)) {
+      goal=candidates[i];
+      ROS_INFO("[OPEN_ESCAPE_MAP] component=%zu centroid=(%.3f,%.3f) selected=(%.3f,%.3f) clearance=%.3f",
+          cells.size(),centroid.x(),centroid.y(),goal.x(),goal.y(),sdf_map_->getDistance(goal));
+      return true;
+    }
+  }
+  return false;
+}
+
+bool ExplorationManager::planConfirmedObject(const Vector3d& pos)
+{
+  vector<pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>> clouds;
+  // Existing target-label, confidence and observation-count gates; no lowering.
+  object_map2d_->getTopConfidenceObjectCloud(clouds);
+  for (const auto& cloud : clouds) {
+    Vector2d goal;
+    vector<Vector2d> path;
+    if (searchObjectPath(pos, cloud, goal, path) && !path.empty()) {
+      const char* trial = std::getenv("APEXNAV_LITERATURE_METHOD");
+      if (trial && std::string(trial)=="reperception" &&
+          unconfirmed_exclusions_.contains(goal, confirmation_step_)) continue;
+      ed_->next_pos_ = goal;
+      ed_->next_best_path_ = path;
+      review_object_id_=object_map2d_->reviewInstance(*cloud);
+      ed_->tsp_tour_.clear();
+      return true;
+    }
+  }
+  return false;  // retain the previous search point while taking real views
+}
+
+bool ExplorationManager::searchUnconfirmedObjectPath(const Vector3d& pos,
+    const pcl::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>& cloud, bool extreme)
+{
+  const bool found = extreme ? searchObjectPathExtreme(pos, cloud, ed_->next_pos_, ed_->next_best_path_) :
+      searchObjectPath(pos, cloud, ed_->next_pos_, ed_->next_best_path_);
+  if (found && unconfirmed_exclusions_.contains(ed_->next_pos_, confirmation_step_)) {
+    ROS_INFO("[TARGET_CONFIRM] stage=excluded step=%d goal=(%.3f,%.3f)",
+        confirmation_step_, ed_->next_pos_.x(), ed_->next_pos_.y());
+    ed_->next_best_path_.clear();
+    return false;
+  }
+  return found;
+}
+
 int ExplorationManager::planNextBestPoint(const Vector3d& pos, const double& yaw)
 {
+  review_object_id_=-1;
   Vector2d pos2d = Vector2d(pos(0), pos(1));
   ros::Time t1 = ros::Time::now();
   auto t2 = t1;
@@ -84,16 +317,23 @@ int ExplorationManager::planNextBestPoint(const Vector3d& pos, const double& yaw
 
     // Try to find path to each detected object in order of confidence
     for (auto object_cloud : object_clouds) {
-      if (searchObjectPath(pos, object_cloud, ed_->next_pos_, ed_->next_best_path_))
+      if (searchObjectPath(pos, object_cloud, ed_->next_pos_, ed_->next_best_path_)) {
+        const char* trial = std::getenv("APEXNAV_LITERATURE_METHOD");
+        if (trial && std::string(trial)=="reperception" &&
+            unconfirmed_exclusions_.contains(ed_->next_pos_, confirmation_step_)) {
+          ed_->next_best_path_.clear();
+          continue;
+        }
+        review_object_id_=object_map2d_->reviewInstance(*object_cloud);
         return SEARCH_BEST_OBJECT;
+      }
     }
   }
 
   // ==================== Navigation Mode: Over-Depth Objects ====================
   if (!object_map2d_->over_depth_object_cloud_->points.empty()) {
     ROS_WARN("[Navigation Mode (Over Depth)] Get over depth object cloud");
-    if (searchObjectPath(
-            pos, object_map2d_->over_depth_object_cloud_, ed_->next_pos_, ed_->next_best_path_))
+    if (searchUnconfirmedObjectPath(pos, object_map2d_->over_depth_object_cloud_))
       return SEARCH_OVER_DEPTH_OBJECT;
   }
 
@@ -115,7 +355,7 @@ int ExplorationManager::planNextBestPoint(const Vector3d& pos, const double& yaw
 
     // Try suspicious objects as backup
     if (!top_object_cloud->points.empty() &&
-        searchObjectPath(pos, top_object_cloud, ed_->next_pos_, ed_->next_best_path_))
+        searchUnconfirmedObjectPath(pos, top_object_cloud))
       return SEARCH_SUSPICIOUS_OBJECT;
     else
       // Try dormant frontiers as last resort
@@ -129,7 +369,7 @@ int ExplorationManager::planNextBestPoint(const Vector3d& pos, const double& yaw
       // Try extreme object search with relaxed constraints
       for (auto object_cloud : object_clouds) {
         if (!object_cloud->points.empty() &&
-            searchObjectPathExtreme(pos, object_cloud, ed_->next_pos_, ed_->next_best_path_))
+            searchUnconfirmedObjectPath(pos, object_cloud, true))
           return SEARCH_EXTREME;
       }
 
@@ -137,18 +377,16 @@ int ExplorationManager::planNextBestPoint(const Vector3d& pos, const double& yaw
       sdf_map_->object_map2d_->getTopConfidenceObjectCloud(object_clouds, false, true);
       for (auto object_cloud : object_clouds) {
         if (!object_cloud->points.empty() &&
-            searchObjectPathExtreme(pos, object_cloud, ed_->next_pos_, ed_->next_best_path_))
+            searchUnconfirmedObjectPath(pos, object_cloud, true))
           return SEARCH_EXTREME;
       }
 
       // Try cached over-depth objects as final option
-      static auto last_over_depth_object_cloud = object_map2d_->over_depth_object_cloud_;
-      if (!object_map2d_->over_depth_object_cloud_->points.empty())
-        last_over_depth_object_cloud = object_map2d_->over_depth_object_cloud_;
+      if (!last_over_depth_object_cloud_ || !object_map2d_->over_depth_object_cloud_->points.empty())
+        last_over_depth_object_cloud_ = object_map2d_->over_depth_object_cloud_;
 
-      if (!last_over_depth_object_cloud->points.empty() &&
-          searchObjectPathExtreme(
-              pos, last_over_depth_object_cloud, ed_->next_pos_, ed_->next_best_path_)) {
+      if (!last_over_depth_object_cloud_->points.empty() &&
+          searchUnconfirmedObjectPath(pos, last_over_depth_object_cloud_, true)) {
         return SEARCH_EXTREME;
       }
     }
@@ -186,10 +424,15 @@ int ExplorationManager::planNextBestPointWithTemporaryScores(const Vector3d& pos
   temporary_score_match_count_ = 0;
   temporary_scores_active_ = !temporary_frontier_scores_.empty();
 
-  const int result = planNextBestPoint(pos, yaw);
+  int result;
+  try { result = planNextBestPoint(pos, yaw); }
+  catch (...) {
+    temporary_scores_active_=false;temporary_frontier_scores_.clear();temporary_score_match_count_=0;
+    throw;
+  }
   matched_score_count = temporary_score_match_count_;
 
-  // Imagination is scoped to exactly one Hybrid decision.  It is never
+  // Imagination is scoped to exactly one planner decision.  It is never
   // retained in the Semantic Score Map or reused after the candidate snapshot.
   temporary_scores_active_ = false;
   temporary_frontier_scores_.clear();
@@ -200,6 +443,49 @@ int ExplorationManager::planNextBestPointWithTemporaryScores(const Vector3d& pos
 void ExplorationManager::chooseExplorationPolicy(Vector2d cur_pos, vector<Vector2d> frontiers,
     Vector2d& next_best_pos, vector<Vector2d>& next_best_path)
 {
+  if (temporary_scores_active_ && textFrontierEnabled()) {
+    vector<SemanticFrontier> reachable;
+    getSortedSemanticFrontiers(cur_pos,frontiers,reachable);
+    // Probabilities and unscored BLIP similarities must NEVER compete as if
+    // they had the same scale. This query only ranks scored reachable branches.
+    reachable.erase(std::remove_if(reachable.begin(),reachable.end(),
+        [](const SemanticFrontier& f){return !f.score_augmented;}),reachable.end());
+    if (!reachable.empty()) {
+      const auto best=std::max_element(reachable.begin(),reachable.end(),
+          [](const SemanticFrontier& a,const SemanticFrontier& b){
+            if(a.semantic_value!=b.semantic_value)return a.semantic_value<b.semantic_value;
+            if(a.real_semantic_value!=b.real_semantic_value)return a.real_semantic_value<b.real_semantic_value;
+            return a.path_length>b.path_length;
+          });
+      next_best_path=best->path;next_best_pos=best->path.back();ed_->tsp_tour_.clear();
+      ROS_INFO("[TEXT_FRONTIER_SELECT] candidate=(%.3f,%.3f) goal=(%.3f,%.3f) belief=%.6f real=%.6f scored_reachable=%zu",
+          best->position.x(),best->position.y(),next_best_pos.x(),next_best_pos.y(),
+          best->semantic_value,best->real_semantic_value,reachable.size());
+      return;
+    }
+    ROS_WARN("[TEXT_FRONTIER_SELECT] fallback=original_policy reason=no_reachable_scored_frontier");
+  }
+  if (temporary_scores_active_ && imageGLMStrongEnabled()) {
+    vector<SemanticFrontier> reachable;
+    getSortedSemanticFrontiers(cur_pos,frontiers,reachable);
+    const bool matched=std::any_of(reachable.begin(),reachable.end(),
+        [](const SemanticFrontier& frontier){return frontier.score_augmented;});
+    if (matched) {
+      const auto best=std::max_element(reachable.begin(),reachable.end(),
+          [](const SemanticFrontier& a,const SemanticFrontier& b){
+            if(a.semantic_value!=b.semantic_value)return a.semantic_value<b.semantic_value;
+            return a.path_length>b.path_length;
+          });
+      next_best_path=best->path;
+      next_best_pos=best->path.back(); // A* reachable endpoint, not an invented goal.
+      ed_->tsp_tour_.clear();
+      ROS_INFO("[IMAGE_GLM_STRONG_SELECT] selected_candidate=(%.3f,%.3f) reachable_goal=(%.3f,%.3f) fused_score=%.6f real=%.6f matched=%d reachable_count=%zu reason=highest_current_fused_semantic bypass=Hybrid_TSP_Closest",
+          best->position.x(),best->position.y(),next_best_pos.x(),next_best_pos.y(),best->semantic_value,
+          best->real_semantic_value,best->score_augmented,reachable.size());
+      return;
+    }
+    ROS_INFO("[IMAGE_GLM_STRONG] fallback=original_policy reason=no_reachable_matched_temporary_score");
+  }
   switch (ep_->policy_mode_) {
     case ExplorationParam::DISTANCE:
       ROS_WARN("[Exploration Mode] Find Closest Frontier");
@@ -475,6 +761,7 @@ void ExplorationManager::computeATSPTour(
   // Initialize ATSP par file
   // Create problem file
   ofstream file(ep_->tsp_dir_ + "/atsp_tour.atsp");
+  if (!file) throw std::runtime_error("TSP problem file is not writable: " + ep_->tsp_dir_);
   file << "NAME : amtsp\n";
   file << "TYPE : ATSP\n";
   file << "DIMENSION : " + to_string(dimension) + "\n";
@@ -491,8 +778,10 @@ void ExplorationManager::computeATSPTour(
   file.close();
 
   // Create par file
+  if (!file) throw std::runtime_error("Failed to write TSP problem file: " + ep_->tsp_dir_);
   const int drone_num = 1;
   file.open(ep_->tsp_dir_ + "/atsp_tour.par");
+  if (!file) throw std::runtime_error("TSP parameter file is not writable: " + ep_->tsp_dir_);
   file << "SPECIAL\n";
   file << "PROBLEM_FILE = " + ep_->tsp_dir_ + "/atsp_tour.atsp\n";
   file << "SALESMEN = " << to_string(drone_num) << "\n";
@@ -502,36 +791,9 @@ void ExplorationManager::computeATSPTour(
   file << "TOUR_FILE = " + ep_->tsp_dir_ + "/atsp_tour.tour\n";
   file.close();
 
-  auto par_dir = ep_->tsp_dir_ + "/atsp_tour.atsp";
-
-  lkh_mtsp_solver::SolveMTSP srv;
-  srv.request.prob = 1;
-  if (!tsp_client_.call(srv)) {
-    ROS_ERROR("Fail to solve ATSP.");
-    return;
-  }
-
-  // Read optimal tour from the tour section of result file
-  ifstream res_file(ep_->tsp_dir_ + "/atsp_tour.tour");
-  string res;
-  while (getline(res_file, res)) {
-    // Go to tour section
-    if (res.compare("TOUR_SECTION") == 0)
-      break;
-  }
-
-  // Read path for ATSP formulation
-  while (getline(res_file, res)) {
-    // Read indices of frontiers in optimal tour
-    int id = stoi(res);
-    if (id == 1)  // Ignore the current state
-      continue;
-    if (id == -1)
-      break;
-    indices.push_back(id - 2);  // Idx of solver-2 == Idx of frontier
-  }
-
-  res_file.close();
+  if (!file) throw std::runtime_error("Failed to write TSP parameter file: " + ep_->tsp_dir_);
+  ros::NodeHandle nh;
+  indices = solveTspWithRecovery(nh, ep_->tsp_dir_ + "/atsp_tour.tour", frontiers.size());
 
   // for (auto idx : indices) ROS_WARN("ATSP idx = %d", idx);
 

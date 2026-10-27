@@ -30,17 +30,19 @@ import json
 import os
 import signal
 import time
+import uuid
+from dataclasses import asdict
 from copy import deepcopy
+from avic_bridge.protocol import CURRENT_ROUTE_CONTRACT, GROUNDED_SCORE_CONTRACT
+from avic_bridge import alignment_audit
 
 # Third-party library imports
 from hydra import initialize, compose
 import numpy as np
 import rospy
-from geometry_msgs.msg import PoseStamped
 from omegaconf import DictConfig
 from prettytable import PrettyTable
-from sensor_msgs.msg import PointCloud2
-from std_msgs.msg import Int32, Int32MultiArray, Float32MultiArray, Float64
+from std_msgs.msg import Int32MultiArray, Float32MultiArray
 import tqdm
 
 # Habitat-related imports
@@ -70,25 +72,18 @@ from basic_utils.object_point_cloud_utils.object_point_cloud import (
 from basic_utils.record_episode.read_record import read_record
 from basic_utils.record_episode.write_record import write_record
 from basic_utils.episode_selection import select_episodes_from_manifest
-from avic_bridge import AvicController, AvicControllerConfig
+from basic_utils.synchronous_planner import SynchronousPlanner
+from avic_bridge import (
+    AvicController,
+    AvicControllerConfig,
+    filter_applicable_frontier_scores,
+)
 from habitat2ros import habitat_publisher
 from llm.answer_reader.answer_reader import read_answer
-from params import HABITAT_STATE, ROS_STATE, ACTION, RESULT_TYPES
+from params import ACTION, RESULT_TYPES
 from vlm.Labels import MP3D_ID_TO_NAME
 from vlm.utils.get_itm_message import get_itm_message_cosine
 from vlm.utils.get_object_utils import get_object
-
-
-def publish_int32(publisher, data):
-    msg = Int32()
-    msg.data = data
-    publisher.publish(msg)
-
-
-def publish_float64(publisher, data):
-    msg = Float64()
-    msg.data = data
-    publisher.publish(msg)
 
 
 def publish_int32_array(publisher, data_list):
@@ -140,37 +135,6 @@ def detected_object_records(target_label, related_objects, scores, label_indices
     return records
 
 
-def publish_observations(event):
-    """Timer callback to publish habitat observations and trigger messages"""
-    global msg_observations, fusion_threshold
-    global ros_pub, trigger_pub, confidence_threshold_pub
-    tmp = deepcopy(msg_observations)
-    ros_pub.habitat_publish_ros_topic(tmp)
-    publish_float64(confidence_threshold_pub, fusion_threshold)
-    trigger = PoseStamped()
-    trigger_pub.publish(trigger)
-
-
-def ros_action_callback(msg):
-    global global_action
-    global_action = msg.data
-
-
-def ros_state_callback(msg):
-    global ros_state
-    ros_state = msg.data
-
-
-def ros_final_state_callback(msg):
-    global final_state
-    final_state = msg.data
-
-
-def ros_expl_result_callback(msg):
-    global expl_result
-    expl_result = msg.data
-
-
 def frontier_candidates_callback(msg):
     """Decode a read-only ApexNav frontier decision snapshot."""
     global latest_topk_frontiers
@@ -207,6 +171,9 @@ def frontier_candidates_callback(msg):
             ]
         else:
             candidate["path_action_prefix"] = []
+        if len(msg.layout.dim)>=2 and 'cluster_cells_v1' in msg.layout.dim[1].label:
+            from avic_bridge.frontier_geometry import decode_cells
+            candidate.update(decode_cells(row,msg.layout.dim[1].label))
         candidates.append(candidate)
     latest_topk_frontiers = candidates
     if candidates:
@@ -256,9 +223,10 @@ def _parse_dataset_arg():
     parser.add_argument("--avic-score-high", type=float, default=0.227590)
     parser.add_argument("--avic-max-score-gap", type=float, default=0.01)
     parser.add_argument("--avic-real-weight", type=float, default=0.5)
+    parser.add_argument("--avic-score-mode", choices=("strict_evidence", "grounded_delta", "frontier_once", "image_glm", "text_frontier"), default="strict_evidence")
     parser.add_argument("--avic-imagination-weight", type=float, default=0.5)
     parser.add_argument("--avic-min-score-spread", type=float, default=0.0001)
-    parser.add_argument("--avic-cache-radius", type=float, default=0.5)
+    parser.add_argument("--avic-cache-radius", type=float, default=0.10)
     parser.add_argument("--avic-cache-yaw-deg", type=float, default=15.0)
     parser.add_argument("--avic-anchor-fov-deg", type=float, default=90.0)
     parser.add_argument("--avic-anchor-max-distance", type=float, default=8.0)
@@ -266,6 +234,8 @@ def _parse_dataset_arg():
     parser.add_argument("--avic-max-bonus", type=float, default=0.02)
     parser.add_argument("--avic-min-reliability", type=float, default=0.55)
     parser.add_argument("--avic-min-evidence-gain", type=float, default=0.20)
+    parser.add_argument("--avic-shadow", action="store_true",
+                        help="Compute AVIC evidence but never publish it; synchronization control")
     parser.add_argument(
         "--max-episodes",
         type=int,
@@ -288,9 +258,7 @@ def _parse_dataset_arg():
 
 
 def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
-    global msg_observations, global_action, ros_state, fusion_threshold
-    global ros_pub, trigger_pub, obj_point_cloud_pub, confidence_threshold_pub
-    global final_state, expl_result, latest_topk_frontiers, latest_avic_frontier_ack
+    global latest_topk_frontiers, latest_avic_frontier_ack
 
     # Load MP3D validation data for object category mapping
     with gzip.open(
@@ -337,6 +305,7 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
             score_band_high=cli_args.avic_score_high,
             max_score_gap=cli_args.avic_max_score_gap,
             real_score_weight=cli_args.avic_real_weight,
+            score_mode=cli_args.avic_score_mode,
             imagination_score_weight=cli_args.avic_imagination_weight,
             min_imagination_score_spread=cli_args.avic_min_score_spread,
             cache_match_radius_m=cli_args.avic_cache_radius,
@@ -349,17 +318,83 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
             min_imagination_evidence_gain=cli_args.avic_min_evidence_gain,
         )
     )
+    if os.environ.get('AVIC_IMAGE_INTERIOR') == '1' or cli_args.avic_score_mode=='text_frontier':
+        rgb_configs = [sensor for agent in cfg.habitat.simulator.agents.values()
+                       for sensor in agent.sim_sensors.values()
+                       if sensor.type == 'HabitatSimRGBSensor']
+        if len(rgb_configs) != 1:
+            raise RuntimeError('Interior reference requires one unambiguous RGB sensor configuration')
+        avic_controller.rgb_hfov_deg = float(rgb_configs[0].hfov)
+    geometry_config=None
+    dictionary_mode=cli_args.avic_score_mode=='text_frontier' and os.environ.get('APEXNAV_TEXT_METHOD')=='dictionary'
+    if dictionary_mode:
+        from avic_bridge.frontier_crop import camera_config as dictionary_camera_config
+        avic_controller.frontier_camera_config=dictionary_camera_config(cfg)
+    if os.environ.get('AVIC_IMAGE_FRONTIER_GEOMETRY')=='1':
+        from avic_bridge.frontier_geometry import camera_config
+        geometry_config=camera_config(cfg)
     if avic_controller.enabled:
         try:
             health = avic_controller.check_health()
+            expected_text_contract='frontier_object_marginals_v1' if dictionary_mode else 'text_frontier_belief_v1'
+            if cli_args.avic_score_mode=='text_frontier' and (health.get('backend')!='text_frontier' or health.get('contract')!=expected_text_contract):
+                raise RuntimeError('text_frontier requires the matching text-only service')
+            if cli_args.avic_score_mode == 'image_glm' and (health.get('backend')!='qwen_image_glm' or health.get('image_glm_contract')!='image_glm_single_view_v1'):
+                raise RuntimeError('image_glm requires matching local-image/GLM backend')
+            if os.environ.get("APEXNAV_RELAXED_IMAGINATION") == "1" and (
+                    health.get("relaxed_imagination_contract") != "relaxed_blend_v1"):
+                raise RuntimeError("restart bridge: relaxed_blend_v1 contract missing")
+            if cli_args.avic_score_mode == "frontier_once":
+                from avic_bridge.frontier_once import CONTRACT, REFRESH_CONTRACT, refresh_threshold
+                if os.environ.get("APEXNAV_FRONTIER_ONCE") != "1":
+                    raise RuntimeError("frontier_once requires the dedicated launcher")
+                if health.get("frontier_once_contract") != CONTRACT:
+                    raise RuntimeError("restart bridge: frontier_once backend contract missing")
+                if refresh_threshold() > 0 and health.get('frontier_refresh_contract') != REFRESH_CONTRACT:
+                    raise RuntimeError('restart bridge: frontier refresh backend contract missing')
             if not health.get("ok", False):
                 raise RuntimeError("service reports not ready: %s" % health)
+            if cli_args.avic_score_mode == "grounded_delta" and (
+                    health.get("score_contract") != GROUNDED_SCORE_CONTRACT or
+                    health.get("route_contract") != CURRENT_ROUTE_CONTRACT):
+                raise RuntimeError("stale or mock bridge: restart SVC with current-route / view-consistency contracts")
+            if health.get("backend") == "svc_qwen" and health.get("gate_contract") != "frontier_anchor_grounded_verifier_v2":
+                raise RuntimeError("stale AVIC bridge: restart with grounded verifier v2")
+            if health.get("backend") == "svc_qwen" and health.get("generation_cache_contract") != "svc_input_video_cache_v1":
+                raise RuntimeError("stale AVIC bridge: restart with SVC input deduplication")
             print("[AVIC] service ready: " + json.dumps(health, ensure_ascii=False))
         except Exception as exc:
-            print("[AVIC] service unavailable; disabling AVIC for this run: %s" % exc)
-            avic_controller.config.mode = "apexnav"
+            raise RuntimeError("AVIC preflight failed; refusing a mislabeled baseline run") from exc
 
     llm_cfg = cfg.llm
+    print("[EXPERIMENT_CONFIG] " + json.dumps({
+        "text_frontier": cli_args.avic_score_mode=='text_frontier',
+        "text_method": 'dictionary' if dictionary_mode else 'hypotheses',
+        "dictionary_contract": 'frontier_object_marginals_v1' if dictionary_mode else None,
+        "text_probability": ('independent object marginals; target entry; no normalization' if dictionary_mode else 'uncalibrated hypothesis mixture; direct candidate ranking, no BLIP blend') if cli_args.avic_score_mode=='text_frontier' else None,
+        "image_glm": os.environ.get('APEXNAV_IMAGE_GLM')=='1',
+        "image_glm_strong": (os.environ.get('APEXNAV_IMAGE_GLM')=='1'
+                             and os.environ.get('APEXNAV_IMAGE_GLM_STRONG')=='1'),
+        "relaxed_imagination": os.environ.get("APEXNAV_RELAXED_IMAGINATION") == "1",
+        "relaxed_imagination_contract": ("relaxed_blend_v1"
+            if os.environ.get("APEXNAV_RELAXED_IMAGINATION") == "1" else None),
+        "frontier_refresh_score_delta": float(os.environ.get('APEXNAV_FRONTIER_REFRESH_DELTA', '0')),
+        "implementation": "stable_sr_sync_v1_20260910",
+        "stagnation_recovery": os.environ.get("APEXNAV_STAGNATION_RECOVERY", "false") == "true",
+        "recovery_version": "stagnation_v1_20260913",
+        "frontier_decision_policy": ("frontier_object_marginals_v1" if dictionary_mode else "text_frontier_belief_v1" if cli_args.avic_score_mode=='text_frontier' else "frontier_once_spatial_q25_half_v1_20260923"
+            if cli_args.avic_score_mode == "frontier_once" else
+            ("image_glm_strong_semantic_v1" if os.environ.get('APEXNAV_IMAGE_GLM_STRONG')=='1'
+             else "image_glm_single_view_v1") if cli_args.avic_score_mode == 'image_glm' else "apexnav_hybrid_all_positive_v1"),
+        "svc_generation_reuse": None if cli_args.avic_score_mode=='text_frontier' else "svc_input_video_cache_v1",
+        "route_contract": ("original_cluster_real_crop" if dictionary_mode else "real_directional_view_text_only" if cli_args.avic_score_mode=='text_frontier' else CURRENT_ROUTE_CONTRACT if cli_args.avic_score_mode in ("grounded_delta", "frontier_once", "image_glm")
+                           else "historical_virtual_probe_v1"),
+        "score_contract": (GROUNDED_SCORE_CONTRACT if cli_args.avic_score_mode == "grounded_delta"
+                           else cli_args.avic_score_mode),
+        "dataset": cli_args.dataset, "manifest": cli_args.episode_manifest,
+        "shadow": cli_args.avic_shadow, "avic": asdict(avic_controller.config),
+        "planner": "synchronous_observation", "astar_expansion_budget": 20000,
+    }, ensure_ascii=False), flush=True)
     llm_client = llm_cfg.llm_client
     llm_answer_path = llm_cfg.llm_answer_path
     llm_response_path = llm_cfg.llm_response_path
@@ -439,41 +474,23 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
         env.current_episode = next(env.episode_iterator)
         env_count -= 1
 
-    # Initialize ROS publishers, subscribers, and timers
-    obj_point_cloud_pub = rospy.Publisher(
-        "habitat/object_point_cloud", PointCloud2, queue_size=10
-    )
+    # Full sensor frames cross the synchronous service; topics carry only
+    # optional AVIC score/ACK exchange and progress/record diagnostics.
     ros_pub = habitat_publisher.ROSPublisher()
-    rospy.Subscriber("/habitat/plan_action", Int32, ros_action_callback, queue_size=10)
-    rospy.Subscriber("/ros/state", Int32, ros_state_callback, queue_size=10)
-    rospy.Subscriber("/ros/expl_state", Int32, ros_final_state_callback, queue_size=10)
-    rospy.Subscriber("/ros/expl_result", Int32, ros_expl_result_callback, queue_size=10)
-    rospy.Subscriber(
-        "/apexnav/topk_frontiers",
-        Float32MultiArray,
-        frontier_candidates_callback,
-        queue_size=10,
-    )
+    synchronous_planner = SynchronousPlanner(ros_pub)
+    target_reviewer=None
+    if os.environ.get('APEXNAV_TARGET_REVIEW')=='1':
+        from avic_bridge.target_review import TargetReviewer
+        target_reviewer=TargetReviewer(os.environ['APEXNAV_REVIEW_URL'])
+    run_nonce = uuid.uuid4().hex[:12]
     rospy.Subscriber(
         "/apexnav/avic_frontier_ack",
         Float32MultiArray,
         avic_frontier_ack_callback,
         queue_size=10,
     )
-    state_pub = rospy.Publisher("/habitat/state", Int32, queue_size=10)
-    trigger_pub = rospy.Publisher("/move_base_simple/goal", PoseStamped, queue_size=10)
-    itm_score_pub = rospy.Publisher("/blip2/cosine_score", Float64, queue_size=10)
-    confidence_threshold_pub = rospy.Publisher(
-        "/detector/confidence_threshold", Float64, queue_size=10
-    )
-    cld_with_score_pub = rospy.Publisher(
-        "/detector/clouds_with_scores", MultipleMasksWithConfidence, queue_size=10
-    )
     progress_pub = rospy.Publisher("/habitat/progress", Int32MultiArray, queue_size=10)
     record_pub = rospy.Publisher("/habitat/record", Float32MultiArray, queue_size=10)
-    executed_action_pub = rospy.Publisher(
-        "/habitat/executed_action", Int32, queue_size=10
-    )
     avic_frontier_scores_pub = rospy.Publisher(
         "/apexnav/avic_frontier_scores", Float32MultiArray, queue_size=10
     )
@@ -498,10 +515,16 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
         camera_pitch = 0.0
         observations = env.reset()
         current_rgb_for_avic = np.array(observations["rgb"], copy=True)
+        alignment_pose = alignment_audit.capture_pose(env, cfg, observations) if alignment_audit.enabled() else None
+        alignment_episode_start = (alignment_pose or {}).get('body')
+        if alignment_pose is not None and alignment_episode_start is not None:
+            alignment_pose['episode_start_body'] = alignment_episode_start
         last_itm_cosine = None
         latest_topk_frontiers = []
         latest_avic_frontier_ack = None
         avic_controller.reset_episode()
+        if target_reviewer is not None:target_reviewer.reset()
+        object_masks_list=[];label_list=[]
         observations["camera_pitch"] = camera_pitch
         msg_observations = deepcopy(observations)
         del observations["camera_pitch"]
@@ -524,6 +547,8 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
             robot_yaw_rad=initial_yaw,
             camera_pitch_rad=camera_pitch,
             step_index=0,
+            alignment_pose=alignment_pose,
+            projection_depth=observations['depth'] if dictionary_mode else None,
         )
 
         # Initialize video frame collection
@@ -535,23 +560,15 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
             frame = overlay_frame(frame, info)
             vis_frames = [frame]
 
-        # Start publishing basic information and trigger messages
-        pub_timer = rospy.Timer(rospy.Duration(0.25), publish_observations)
-
-        print("Agent is waiting in the environment!!!")
-
-        # Wait for ROS system to be ready
-        rate = rospy.Rate(10)
-        ros_state = ROS_STATE.INIT
-        while ros_state == ROS_STATE.INIT or ros_state == ROS_STATE.WAIT_TRIGGER:
-            if ros_state == ROS_STATE.INIT:
-                print("Waiting for ROS to get odometry...")
-            elif ros_state == ROS_STATE.WAIT_TRIGGER:
-                print("Waiting for ROS trigger...")
-            rate.sleep()
-
-        # Stop timer publishing when starting action execution
-        pub_timer.shutdown()
+        transaction_episode = "%s:%s:%s:%s" % (
+            run_nonce, epi, env.current_episode.scene_id, env.current_episode.episode_id)
+        planned = synchronous_planner.plan(
+            observations=msg_observations, episode=transaction_episode, step=0,
+            executed_action=ACTION.STOP, itm_score=None,
+            confidence_threshold=fusion_threshold, detections=cld_with_score_msg)
+        global_action = planned.action
+        final_state, expl_result = planned.final_state, planned.exploration_result
+        frontier_candidates_callback(planned.frontiers)
 
         print("Agent is ready to go!!!!")
 
@@ -574,10 +591,17 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
                     global_action = ACTION.STOP
 
                 baseline_action = int(global_action)
+                candidates_for_avic=deepcopy(latest_topk_frontiers)
+                if geometry_config is not None and candidates_for_avic:
+                    from avic_bridge.frontier_geometry import attach_regions
+                    candidates_for_avic=attach_regions(candidates_for_avic,observations,
+                        geometry_config,camera_pitch,count_steps,current_rgb_for_avic)
                 avic_decision = avic_controller.decide_action(
                     rgb=current_rgb_for_avic,
                     baseline_action=baseline_action,
-                    target_category=label,
+                    # Dataset identity, not the detector's display alias
+                    # (e.g. plant -> potted plant, chest_of_drawers -> nightstand).
+                    target_category=env.current_episode.object_category if dictionary_mode else label,
                     target_room=room,
                     target_related_objects=llm_answer,
                     scene_id=env.current_episode.scene_id,
@@ -587,17 +611,17 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
                     itm_cosine=last_itm_cosine,
                     final_state=final_state,
                     exploration_result=expl_result,
-                    frontier_candidates=deepcopy(latest_topk_frontiers),
+                    frontier_candidates=candidates_for_avic,
                 )
                 # AVIC never directly controls Habitat or chooses a frontier.
                 # It sends temporary semantic scores back to C++; ApexNav then
                 # reruns its unchanged Hybrid semantic/geometric policy.
                 global_action = baseline_action
-                # Cached imagination scores must be reapplied when the same
-                # physical frontier re-enters the middle score band, without
-                # issuing another SVC request.
-                if avic_decision.frontier_scores:
-                    score_rows = avic_decision.frontier_scores
+                # Default: positive bonuses; relaxed experiment: signed fusion.
+                score_rows = filter_applicable_frontier_scores(
+                    avic_decision.frontier_scores
+                )
+                if score_rows and not cli_args.avic_shadow:
                     query_id = int(score_rows[0]["query_id"])
                     score_message = [float(query_id), float(len(score_rows))]
                     for score in score_rows:
@@ -612,6 +636,11 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
                             ]
                         )
                     latest_avic_frontier_ack = None
+                    alignment_audit.emit('score_publish', dict(
+                        epoch=avic_controller.generation_epoch, scene=env.current_episode.scene_id,
+                        episode=str(env.current_episode.episode_id),step=count_steps,query_id=query_id,
+                        last_observed_request=getattr(avic_controller,'alignment_last_request',None),scores=score_rows,
+                        identity_note='Use per-score alignment_source_request for cached origins; last_observed_request is not an execution binding'))
                     publish_float32_array(avic_frontier_scores_pub, score_message)
                     print(
                         "[AVIC_FRONTIER_SCORES] "
@@ -625,13 +654,22 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
                         ),
                         flush=True,
                     )
-                    # A timeout fails open to the original ApexNav action.
-                    ack_deadline = time.monotonic() + 2.0
+                    # A missing ACK may mean C++ already changed its target.
+                    # Abort instead of executing with unknown planner state.
+                    ack_deadline = time.monotonic() + 120.0
+                    acknowledged = False
                     while time.monotonic() < ack_deadline and not rospy.is_shutdown():
                         ack = latest_avic_frontier_ack
                         if ack is not None and ack["query_id"] == query_id:
                             if ack["applied"]:
                                 global_action = ack["safe_action"]
+                            acknowledged = True
+                            alignment_audit.emit('ack',dict(
+                                epoch=avic_controller.generation_epoch,scene=env.current_episode.scene_id,
+                                episode=str(env.current_episode.episode_id),step=count_steps,query_id=query_id,
+                                last_observed_request=getattr(avic_controller,'alignment_last_request',None),ack=ack,scores=score_rows,
+                                association='Python waiting transaction; C++ ACK has no epoch or selected xy/path',
+                                actual_target_xy=None,actual_path=None))
                             print(
                                 "[AVIC_FRONTIER_ACK] "
                                 + json.dumps(ack, ensure_ascii=False),
@@ -639,8 +677,26 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
                             )
                             break
                         time.sleep(0.01)
-                publish_int32(executed_action_pub, global_action)
+                    if not acknowledged:
+                        raise RuntimeError("AVIC frontier ACK timeout; planner state unknown")
+                if target_reviewer is not None:
+                    review_original_action,review_original_state=int(global_action),final_state
+                    global_action,final_state=target_reviewer.process(
+                        episode=transaction_episode,step=count_steps,action=int(global_action),final_state=final_state,
+                        target=env.current_episode.object_category,alias=label,rgb=current_rgb_for_avic,
+                        masks=object_masks_list,labels=label_list,pose=observation_planar_pose(observations))
+                    if review_original_action==ACTION.STOP and review_original_state==4 and global_action!=ACTION.STOP:
+                        # Evaluation-only audit AFTER the decision. Never supplied to the module or VLM.
+                        print('[TARGET_REVIEW_COUNTERFACTUAL] '+json.dumps(dict(
+                            episode=transaction_episode,step=count_steps,
+                            would_fail_stop=bool(env.get_metrics()['distance_to_goal']>success_distance),
+                            distance_to_goal=float(env.get_metrics()['distance_to_goal']),threshold=float(success_distance))),flush=True)
                 avic_controller.record_executed_action(global_action)
+                alignment_audit.emit('executed_action',dict(
+                    epoch=avic_controller.generation_epoch,scene=env.current_episode.scene_id,
+                    episode=str(env.current_episode.episode_id),step=count_steps,
+                    action=int(global_action),last_observed_request=getattr(avic_controller,'alignment_last_request',None),
+                    published_scores=bool(score_rows)))
 
                 if global_action == ACTION.MOVE_FORWARD:
                     action = HabitatSimActions.move_forward
@@ -657,6 +713,7 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
                 elif global_action == ACTION.STOP:
                     action = HabitatSimActions.stop
 
+                last_executed_action = int(global_action)
                 global_action = None
 
             if action is None:
@@ -666,11 +723,9 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
             print(f"\n--------------Step: {count_steps}--------------")
             print(f"Finding [{label}]; Action: {action};")
 
-            # Notify ROS system that action execution is starting
-            publish_int32(state_pub, HABITAT_STATE.ACTION_EXEC)
-
             observations = env.step(action)
             current_rgb_for_avic = np.array(observations["rgb"], copy=True)
+            alignment_pose = alignment_audit.capture_pose(env,cfg,observations,alignment_episode_start) if alignment_audit.enabled() else None
 
             # Calculate ITM cosine similarity score
             cosine = get_itm_message_cosine(observations["rgb"], label, room)
@@ -678,7 +733,6 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
             print(f"Target related room: {room}")
             print(f"ITM cosine similarity: {cosine:.3f}")
 
-            publish_float64(itm_score_pub, cosine)
 
             # Detect objects in the current observation
             observations["rgb"], score_list, object_masks_list, label_list = get_object(
@@ -692,28 +746,38 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
                 robot_yaw_rad=robot_yaw,
                 camera_pitch_rad=camera_pitch,
                 step_index=count_steps,
+                alignment_pose=alignment_pose,
+                projection_depth=observations['depth'] if dictionary_mode else None,
                 itm_cosine=cosine,
                 detected_objects=detected_object_records(
                     label, llm_answer, score_list, label_list
                 ),
             )
 
-            # Publish habitat observations to ROS
+            # Build the complete observation transaction.
             observations["camera_pitch"] = camera_pitch
             msg_observations = deepcopy(observations)
             del observations["camera_pitch"]
-            ros_pub.habitat_publish_ros_topic(msg_observations)
 
-            # Generate and publish object point clouds
+            # Generate object point clouds for the same frame.
             obj_point_cloud_list = get_object_point_cloud(
-                cfg, observations, object_masks_list
+                cfg, observations, object_masks_list,
+                camera_pitch=camera_pitch if (
+                    os.environ.get('APEXNAV_TARGET_ALIASES') == 'picture_pose'
+                    and label == 'picture | framed photograph') else None,
             )
+            if os.environ.get('APEXNAV_PERCEPTION_AUDIT') == '1':
+                print('[OBJECT_POSE_AUDIT] ' + json.dumps(dict(
+                    label=label, step=count_steps, camera_pitch_rad=camera_pitch,
+                    aligned=os.environ.get('APEXNAV_TARGET_ALIASES') == 'picture_pose'
+                        and label == 'picture | framed photograph',
+                    gps_height=float(observations['gps'][1]),
+                    cloud_points=[int(c.width*c.height) for c in obj_point_cloud_list])), flush=True)
 
-            # Publish detection-related information
+            # Attach detection-related information.
             cld_with_score_msg.point_clouds = obj_point_cloud_list
             cld_with_score_msg.confidence_scores = score_list
             cld_with_score_msg.label_indices = label_list
-            cld_with_score_pub.publish(cld_with_score_msg)
 
             # Generate video frame
             info = env.get_metrics()
@@ -728,12 +792,18 @@ def main(cfg: DictConfig, cli_args: argparse.Namespace) -> None:
             if distance_to_goal <= success_distance and pass_object == 0:
                 pass_object = 1
 
-            # Notify ROS system that action execution is complete
-            publish_int32(state_pub, HABITAT_STATE.ACTION_FINISH)
+            if not env.episode_over:
+                planned = synchronous_planner.plan(
+                    observations=msg_observations, episode=transaction_episode, step=count_steps,
+                    executed_action=last_executed_action, itm_score=cosine,
+                    confidence_threshold=fusion_threshold, detections=cld_with_score_msg)
+                global_action = planned.action
+                final_state, expl_result = planned.final_state, planned.exploration_result
+                frontier_candidates_callback(planned.frontiers)
             rate.sleep()
 
         # Notify ROS system that current episode evaluation is complete
-        publish_int32(state_pub, HABITAT_STATE.EPISODE_FINISH)
+        # The next step-0 transaction resets both map and planner atomically.
 
         # Collect evaluation metrics
         info = env.get_metrics()

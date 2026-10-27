@@ -5,7 +5,12 @@ The SVC implementation is loaded lazily by :mod:`avic_bridge.service` inside
 the separate ``avic`` Conda environment.
 """
 
-__all__ = ["AvicController", "AvicControllerConfig", "AvicDecision"]
+__all__ = [
+    "AvicController",
+    "AvicControllerConfig",
+    "AvicDecision",
+    "filter_applicable_frontier_scores",
+]
 
 
 def __getattr__(name):
@@ -17,11 +22,17 @@ def __getattr__(name):
     """
 
     if name in __all__:
-        from .controller import AvicController, AvicControllerConfig, AvicDecision
+        from .controller import (
+            AvicController,
+            AvicControllerConfig,
+            AvicDecision,
+            filter_applicable_frontier_scores,
+        )
 
         return {
             "AvicController": AvicController,
             "AvicControllerConfig": AvicControllerConfig,
             "AvicDecision": AvicDecision,
+            "filter_applicable_frontier_scores": filter_applicable_frontier_scores,
         }[name]
     raise AttributeError("module %r has no attribute %r" % (__name__, name))

@@ -1,0 +1,365 @@
+{
+  "name": "mp3d_random50_seed20260906_habitat",
+  "dataset": "mp3d",
+  "split": "val",
+  "selection_version": 1,
+  "criteria": {
+    "source_episode_count": 2195,
+    "sample_size": 50,
+    "method": "uniform random sample without replacement over Habitat runtime episodes",
+    "random_seed": 20260906,
+    "ordering": "Python random.Random(seed).sample output order"
+  },
+  "episodes": [
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "139",
+      "object_category": "cushion",
+      "geodesic_distance": 13.10772,
+      "euclidean_distance": 4.1323
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "58",
+      "object_category": "chair",
+      "geodesic_distance": 6.75891,
+      "euclidean_distance": 5.98664
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "68",
+      "object_category": "cabinet",
+      "geodesic_distance": 3.17422,
+      "euclidean_distance": 2.8533
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "200",
+      "object_category": "sofa",
+      "geodesic_distance": 2.6113,
+      "euclidean_distance": 2.27411
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "160",
+      "object_category": "picture",
+      "geodesic_distance": 6.17868,
+      "euclidean_distance": 3.85183
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "59",
+      "object_category": "table",
+      "geodesic_distance": 9.88361,
+      "euclidean_distance": 2.91637
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "44",
+      "object_category": "cushion",
+      "geodesic_distance": 9.58464,
+      "euclidean_distance": 8.58375
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "52",
+      "object_category": "table",
+      "geodesic_distance": 6.89383,
+      "euclidean_distance": 5.61593
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "17",
+      "object_category": "gym_equipment",
+      "geodesic_distance": 14.56687,
+      "euclidean_distance": 8.52298
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "17",
+      "object_category": "plant",
+      "geodesic_distance": 5.44343,
+      "euclidean_distance": 5.03544
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "53",
+      "object_category": "cushion",
+      "geodesic_distance": 11.30106,
+      "euclidean_distance": 6.10594
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "32",
+      "object_category": "chair",
+      "geodesic_distance": 2.34545,
+      "euclidean_distance": 2.20904
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "39",
+      "object_category": "chair",
+      "geodesic_distance": 8.82637,
+      "euclidean_distance": 8.0053
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "83",
+      "object_category": "cushion",
+      "geodesic_distance": 2.27686,
+      "euclidean_distance": 1.73368
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "72",
+      "object_category": "cushion",
+      "geodesic_distance": 5.23338,
+      "euclidean_distance": 4.88042
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "15",
+      "object_category": "gym_equipment",
+      "geodesic_distance": 18.44886,
+      "euclidean_distance": 14.60525
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "123",
+      "object_category": "cushion",
+      "geodesic_distance": 7.56828,
+      "euclidean_distance": 6.9882
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "164",
+      "object_category": "bed",
+      "geodesic_distance": 10.39665,
+      "euclidean_distance": 2.93102
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "86",
+      "object_category": "table",
+      "geodesic_distance": 1.28155,
+      "euclidean_distance": 1.18167
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "150",
+      "object_category": "clothes",
+      "geodesic_distance": 5.34925,
+      "euclidean_distance": 3.26809
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "94",
+      "object_category": "table",
+      "geodesic_distance": 13.91573,
+      "euclidean_distance": 8.78237
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "124",
+      "object_category": "cabinet",
+      "geodesic_distance": 18.87499,
+      "euclidean_distance": 16.47093
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "48",
+      "object_category": "chair",
+      "geodesic_distance": 6.33983,
+      "euclidean_distance": 6.00275
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "11",
+      "object_category": "plant",
+      "geodesic_distance": 5.72322,
+      "euclidean_distance": 4.46371
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "122",
+      "object_category": "chair",
+      "geodesic_distance": 16.14282,
+      "euclidean_distance": 7.3984
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "10",
+      "object_category": "cabinet",
+      "geodesic_distance": 2.89235,
+      "euclidean_distance": 2.60684
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "65",
+      "object_category": "cushion",
+      "geodesic_distance": 5.36773,
+      "euclidean_distance": 4.58783
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "32",
+      "object_category": "gym_equipment",
+      "geodesic_distance": 15.6948,
+      "euclidean_distance": 8.80195
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "169",
+      "object_category": "plant",
+      "geodesic_distance": 5.52081,
+      "euclidean_distance": 4.8297
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "16",
+      "object_category": "bed",
+      "geodesic_distance": 3.79716,
+      "euclidean_distance": 3.61242
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "193",
+      "object_category": "seating",
+      "geodesic_distance": 3.02501,
+      "euclidean_distance": 2.70599
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "166",
+      "object_category": "picture",
+      "geodesic_distance": 8.93923,
+      "euclidean_distance": 7.65897
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "22",
+      "object_category": "table",
+      "geodesic_distance": 7.8865,
+      "euclidean_distance": 6.22427
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "188",
+      "object_category": "towel",
+      "geodesic_distance": 21.95387,
+      "euclidean_distance": 4.30966
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "151",
+      "object_category": "cabinet",
+      "geodesic_distance": 22.99357,
+      "euclidean_distance": 12.82818
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "38",
+      "object_category": "cabinet",
+      "geodesic_distance": 7.5329,
+      "euclidean_distance": 5.91273
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "192",
+      "object_category": "shower",
+      "geodesic_distance": 7.50024,
+      "euclidean_distance": 6.39397
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "165",
+      "object_category": "toilet",
+      "geodesic_distance": 14.66667,
+      "euclidean_distance": 13.83105
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "7",
+      "object_category": "cabinet",
+      "geodesic_distance": 7.34976,
+      "euclidean_distance": 6.55666
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "169",
+      "object_category": "fireplace",
+      "geodesic_distance": 2.34925,
+      "euclidean_distance": 2.20698
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "144",
+      "object_category": "clothes",
+      "geodesic_distance": 5.02708,
+      "euclidean_distance": 3.98611
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "57",
+      "object_category": "table",
+      "geodesic_distance": 2.91773,
+      "euclidean_distance": 2.48775
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "158",
+      "object_category": "picture",
+      "geodesic_distance": 4.93778,
+      "euclidean_distance": 2.8682
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "184",
+      "object_category": "chair",
+      "geodesic_distance": 6.25575,
+      "euclidean_distance": 5.8924
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "73",
+      "object_category": "table",
+      "geodesic_distance": 1.82131,
+      "euclidean_distance": 1.67109
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "67",
+      "object_category": "chair",
+      "geodesic_distance": 2.1986,
+      "euclidean_distance": 2.07859
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "116",
+      "object_category": "sofa",
+      "geodesic_distance": 5.89316,
+      "euclidean_distance": 4.94022
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "186",
+      "object_category": "counter",
+      "geodesic_distance": 23.73208,
+      "euclidean_distance": 7.49936
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "98",
+      "object_category": "cushion",
+      "geodesic_distance": 14.2396,
+      "euclidean_distance": 4.84932
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "33",
+      "object_category": "table",
+      "geodesic_distance": 1.30741,
+      "euclidean_distance": 1.24031
+    }
+  ]
+}

@@ -8,12 +8,13 @@ import rospy
 from basic_utils.object_point_cloud_utils.geometry_utils import (
     get_point_cloud,
     xyz_yaw_to_tf_matrix,
+    xyz_yaw_pitch_to_tf_matrix,
     too_offset,
     transform_points,
 )
 
 
-def get_object_point_cloud(cfg, observations, object_masks_list):
+def get_object_point_cloud(cfg, observations, object_masks_list, camera_pitch=None):
     """
     Extract 3D point clouds for detected objects from sensor observations
     
@@ -48,6 +49,9 @@ def get_object_point_cloud(cfg, observations, object_masks_list):
         )
         camera_position = np.array([-x, -y, camera_height])
         tf_camera_to_episodic = xyz_yaw_to_tf_matrix(camera_position, camera_yaw)
+        if camera_pitch is not None:
+            camera_position[2] += observations['gps'][1]
+            tf_camera_to_episodic = xyz_yaw_pitch_to_tf_matrix(camera_position, camera_yaw, camera_pitch)
 
         if len(local_cloud) == 0:
             obj_point_cloud_list.append(PointCloud2())

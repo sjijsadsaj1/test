@@ -1,12 +1,19 @@
 import base64
 import math
+import tempfile
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 
-from avic_bridge.controller import AvicController, AvicControllerConfig
+from avic_bridge.controller import (
+    AvicController,
+    AvicControllerConfig,
+    filter_applicable_frontier_scores,
+)
 from avic_bridge.protocol import SCHEMA_VERSION, action_dict, validate_request
-from avic_bridge.svc_adapter import build_relative_camera_path
+from avic_bridge.svc_adapter import SVCAdapter, build_relative_camera_path
 
 
 class FakeClient:
@@ -109,6 +116,71 @@ def decide(controller, baseline=1):
 
 
 class ControllerTests(unittest.TestCase):
+    def test_generation_epoch_changes_only_on_episode_reset(self):
+        client = FakeClient({"decision": "fallback", "reason": "test"})
+        controller = make_controller("avic", client)
+        epoch = controller.generation_epoch
+        decide(controller)
+        self.assertEqual(client.requests[0]["episode"]["generation_epoch"], epoch)
+        self.assertEqual(controller.generation_epoch, epoch)
+        controller.reset_episode()
+        self.assertNotEqual(controller.generation_epoch, epoch)
+    def test_cache_context_ttl_and_reset(self):
+        import copy
+        controller = make_controller("avic", FakeClient())
+        controller.current_step = 10
+        plan = {"source_frontier": frontier_candidates()[0],
+                "frontier_anchor": {"observation_id": "real-1"}}
+        score = dict(imagined_itm_score=0.4, imagination_reliability=0.8, imagination_bonus=0.004)
+        controller._store_cached_imagination(plan, score)
+        self.assertIsNotNone(controller._find_cached_imagination(plan))
+        for field, value in (("x", 1.2), ("relative_yaw_rad", 2.0), ("observation_evidence", 0.4)):
+            changed = copy.deepcopy(plan)
+            changed["source_frontier"][field] = value
+            self.assertIsNone(controller._find_cached_imagination(changed), field)
+        changed = copy.deepcopy(plan)
+        changed["frontier_anchor"]["observation_id"] = "real-2"
+        self.assertIsNone(controller._find_cached_imagination(changed))
+        controller.current_step = 41
+        self.assertIsNone(controller._find_cached_imagination(plan))
+        controller.reset_episode()
+        self.assertEqual(controller.frontier_imagination_cache, [])
+
+    def test_negative_cache_expires_and_equal_bonuses_reach_hybrid(self):
+        client = FakeClient({"decision": "call_wm", "reason": "equal evidence",
+            "candidate_scores": [dict(plan_id="frontier_%d" % rank,
+                imagined_itm_score=0.5, imagination_reliability=0.8,
+                imagination_bonus=0.004, imagination_evaluated=True) for rank in range(2)]})
+        controller = make_controller("avic", client)
+        result = decide(controller)
+        self.assertEqual([s['rank'] for s in result.frontier_scores], [0, 1])
+        self.assertAlmostEqual(result.frontier_scores[0]['decision_semantic_score'], 0.204)
+        self.assertAlmostEqual(result.frontier_scores[1]['decision_semantic_score'], 0.214)
+        self.assertFalse(result.overridden)  # Only ROS Hybrid may choose an action.
+        controller.reset_episode()
+        controller.current_step = 10
+        plan = {"source_frontier": frontier_candidates()[0], "frontier_anchor": {"observation_id": "x"}}
+        controller._store_cached_imagination(plan, dict(imagined_itm_score=0.5,
+            imagination_reliability=0.8, imagination_bonus=0.0))
+        controller.current_step = 90
+        self.assertIsNotNone(controller._find_cached_imagination(plan))
+        controller.current_step = 91
+        self.assertIsNone(controller._find_cached_imagination(plan))
+
+    def test_hybrid_receives_small_and_weaker_bonuses_with_incumbent(self):
+        for bonuses in [(0.0032, 0.0032), (0.0029, 0.0032), (0.0005, 0.0032)]:
+            with self.subTest(bonuses=bonuses):
+                client = FakeClient({'decision': 'call_wm', 'reason': 'Hybrid inputs',
+                    'candidate_scores': [dict(plan_id='frontier_%d' % rank,
+                        imagined_itm_score=0.5, imagination_reliability=0.8,
+                        imagination_bonus=bonus, imagination_evaluated=True)
+                        for rank, bonus in enumerate(bonuses)]})
+                result = decide(make_controller('avic', client))
+                self.assertEqual([s['rank'] for s in result.frontier_scores], [0, 1])
+                for score, bonus in zip(result.frontier_scores, bonuses):
+                    self.assertAlmostEqual(score['imagination_bonus'], bonus)
+                self.assertFalse(result.overridden)
+
     def test_apexnav_mode_never_calls_service(self):
         client = FakeClient(error=AssertionError("service must not be called"))
         result = decide(make_controller("apexnav", client), baseline=1)
@@ -149,7 +221,7 @@ class ControllerTests(unittest.TestCase):
         result = decide(make_controller("avic", client), baseline=1)
         self.assertEqual(result.executed_action, 1)
         self.assertFalse(result.overridden)
-        self.assertEqual(len(result.frontier_scores), 2)
+        self.assertEqual(len(result.frontier_scores), 1)
         self.assertEqual(result.frontier_scores[0]["rank"], 0)
         self.assertAlmostEqual(
             result.frontier_scores[0]["decision_semantic_score"], 0.22
@@ -175,7 +247,9 @@ class ControllerTests(unittest.TestCase):
     def test_service_error_falls_back(self):
         result = decide(make_controller("avic", FakeClient(error=TimeoutError("late"))))
         self.assertEqual(result.executed_action, 1)
-        self.assertEqual(result.service_decision, "skip")
+        self.assertEqual(result.service_decision, "fallback")
+        self.assertTrue(result.used_world_model)
+        self.assertGreater(result.latency_ms, 0.0)
 
     def test_middle_band_frontiers_become_imagination_plans(self):
         client = FakeClient(
@@ -240,6 +314,7 @@ class ControllerTests(unittest.TestCase):
             request["score_policy"],
             {
                 "real_weight": 0.5,
+                "mode": "strict_evidence",
                 "imagination_weight": 0.5,
                 "min_imagination_score_spread": 0.0001,
                 "max_imagination_bonus": 0.02,
@@ -383,7 +458,7 @@ class ControllerTests(unittest.TestCase):
         self.assertIsNotNone(anchor)
         self.assertEqual(anchor["semantic_support_source"], "detected_object")
 
-    def test_cached_frontier_reuses_first_imagination_without_service_call(self):
+    def test_positive_cache_reaches_hybrid_without_accumulation_or_extra_call(self):
         client = FakeClient(
             {
                 "decision": "call_wm",
@@ -399,7 +474,7 @@ class ControllerTests(unittest.TestCase):
                     },
                     {
                         "plan_id": "frontier_1",
-                        "imagined_itm_score": 0.30,
+                        "imagined_itm_score": 0.10,
                         "imagination_reliability": 1.0,
                     },
                 ],
@@ -422,14 +497,14 @@ class ControllerTests(unittest.TestCase):
             frontier_candidates=frontier_candidates(query_id=2),
         )
         self.assertTrue(first.used_world_model)
+        self.assertEqual(len(first.frontier_scores), 1)
         self.assertEqual(len(client.requests), 1)
         self.assertEqual(reused.service_decision, "cache_hit")
         self.assertFalse(reused.used_world_model)
         self.assertEqual(reused.cache_hits, 2)
-        self.assertTrue(all(item["cache_hit"] for item in reused.frontier_scores))
-        self.assertAlmostEqual(
-            reused.frontier_scores[0]["decision_semantic_score"], 0.22
-        )
+        self.assertEqual(len(reused.frontier_scores), 1)
+        self.assertEqual(reused.frontier_scores[0]['imagination_bonus'], first.frontier_scores[0]['imagination_bonus'])
+        self.assertEqual(reused.frontier_scores[0]['decision_semantic_score'], first.frontier_scores[0]['decision_semantic_score'])
 
         outside = frontier_candidates(query_id=3)
         outside[0]["semantic_score"] = 0.24
@@ -499,7 +574,7 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(result.service_decision, "skip")
         self.assertEqual(result.frontier_scores, [])
 
-    def test_cache_is_physical_and_ignores_route_churn(self):
+    def test_cache_ignores_route_churn_but_invalidates_yaw_change(self):
         client = FakeClient(
             {
                 "decision": "call_wm",
@@ -541,9 +616,10 @@ class ControllerTests(unittest.TestCase):
             exploration_result=0,
             frontier_candidates=changed,
         )
-        self.assertEqual(len(client.requests), 1)
+        self.assertEqual(len(client.requests), 2)
+        self.assertEqual(client.requests[-1]["navigation"]["imagination_plan_ids"], ["frontier_1"])
 
-    def test_rejected_imagination_is_cached_as_zero_bonus(self):
+    def test_rejected_imagination_is_cached_but_never_published(self):
         client = FakeClient(
             {
                 "decision": "call_wm",
@@ -589,8 +665,125 @@ class ControllerTests(unittest.TestCase):
         )
         self.assertTrue(first.used_world_model)
         self.assertEqual(len(client.requests), 1)
+        self.assertEqual(first.frontier_scores, [])
         self.assertEqual(second.service_decision, "cache_hit")
-        self.assertTrue(all(item["imagination_bonus"] == 0.0 for item in second.frontier_scores))
+        self.assertEqual(second.frontier_scores, [])
+
+    def test_filter_applicable_frontier_scores_requires_strict_gain(self):
+        rows = [
+            {
+                "frontier_id": 0,
+                "real_semantic_score": 0.20,
+                "imagination_bonus": 0.0,
+                "decision_semantic_score": 0.20,
+            },
+            {
+                "frontier_id": 1,
+                "real_semantic_score": 0.21,
+                "imagination_bonus": 0.02,
+                "decision_semantic_score": 0.23,
+            },
+            {
+                "frontier_id": 2,
+                "real_semantic_score": 0.22,
+                "imagination_bonus": 0.02,
+                "decision_semantic_score": 0.22,
+            },
+        ]
+
+        filtered = filter_applicable_frontier_scores(rows)
+
+        self.assertEqual([row["frontier_id"] for row in filtered], [1])
+
+    def test_transient_unverified_result_is_not_applied_or_cached(self):
+        client = FakeClient(
+            {
+                "decision": "call_wm",
+                "selected_action": action_dict(1),
+                "selected_plan_id": "frontier_0",
+                "reason": "verifier timeout",
+                "latency_ms": 1.0,
+                "candidate_scores": [
+                    {
+                        "plan_id": "frontier_0",
+                        "imagined_itm_score": 0.40,
+                        "imagination_reliability": 0.0,
+                        "evidence_gain": 0.0,
+                        "imagination_bonus": 0.0,
+                        "imagination_evaluated": False,
+                    },
+                    {
+                        "plan_id": "frontier_1",
+                        "imagined_itm_score": 0.30,
+                        "imagination_reliability": 0.0,
+                        "evidence_gain": 0.0,
+                        "imagination_bonus": 0.0,
+                        "imagination_evaluated": False,
+                    },
+                ],
+            }
+        )
+        controller = make_controller("avic", client)
+        first = decide(controller)
+        second = controller.decide_action(
+            rgb=np.zeros((16, 24, 3), dtype=np.uint8),
+            baseline_action=1,
+            target_category="chair",
+            target_room="living room",
+            scene_id="scene.glb",
+            episode_id="7",
+            step_index=40,
+            camera_pitch_rad=0.0,
+            itm_cosine=0.1,
+            final_state=0,
+            exploration_result=0,
+            frontier_candidates=frontier_candidates(query_id=2),
+        )
+        self.assertEqual(first.service_decision, "fallback")
+        self.assertEqual(second.service_decision, "fallback")
+        self.assertEqual(len(client.requests), 2)
+        self.assertEqual(controller.frontier_imagination_cache, [])
+
+
+class VideoFrameSamplingTests(unittest.TestCase):
+    def test_single_sample_is_terminal_frame_and_multisample_includes_terminal(self):
+        frames = [np.full((8, 8, 3), index, dtype=np.uint8) for index in range(10)]
+
+        class FakeCapture:
+            def __init__(self, _path):
+                self.index = 0
+
+            def isOpened(self):
+                return True
+
+            def get(self, _property):
+                return len(frames)
+
+            def set(self, _property, value):
+                self.index = int(value)
+
+            def read(self):
+                return True, frames[self.index].copy()
+
+            def release(self):
+                pass
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            single_dir = root / "single"
+            multi_dir = root / "multi"
+            single_dir.mkdir()
+            multi_dir.mkdir()
+            with patch("avic_bridge.svc_adapter.cv2.VideoCapture", FakeCapture):
+                single = SVCAdapter._sample_video_frames(
+                    root / "fake.mp4", 1, single_dir
+                )
+                multi = SVCAdapter._sample_video_frames(
+                    root / "fake.mp4", 3, multi_dir
+                )
+        self.assertEqual([item["video_frame_index"] for item in single], [9])
+        self.assertEqual([item["video_frame_index"] for item in multi], [3, 6, 9])
+        self.assertEqual(multi[-1]["video_frame_index"], 9)
 
 
 class CameraPathTests(unittest.TestCase):

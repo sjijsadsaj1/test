@@ -11,6 +11,16 @@ if [[ -f "$AVIC_ENV_FILE" ]]; then
     source "$AVIC_ENV_FILE"
 fi
 
+# Fail before starting expensive services if a refresh threshold is malformed.
+frontier_refresh_enabled="$(python3 - <<'PY'
+import math, os
+v = float(os.environ.get('APEXNAV_FRONTIER_REFRESH_DELTA', '0'))
+if not math.isfinite(v) or not 0 <= v <= 2:
+    raise SystemExit('APEXNAV_FRONTIER_REFRESH_DELTA must be finite and in [0,2]')
+print(int(v > 0))
+PY
+)"
+
 readonly CONDA_SETUP="${APEXNAV_CONDA_SETUP:-}"
 readonly CONDA_ENV="${APEXNAV_CONDA_ENV:-apexnav}"
 readonly AVIC_VLLM="${AVIC_VLLM:-vllm}"
@@ -19,7 +29,6 @@ readonly AVIC_QWEN_MODEL="${AVIC_QWEN_MODEL:-Qwen/Qwen2.5-VL-7B-Instruct}"
 readonly AVIC_QWEN_PORT="${AVIC_QWEN_PORT:-8001}"
 readonly AVIC_BRIDGE_PORT="${AVIC_BRIDGE_PORT:-8091}"
 readonly AVIC_QWEN_MAX_IMAGES_PER_PROMPT="${AVIC_QWEN_MAX_IMAGES_PER_PROMPT:-12}"
-readonly AVIC_QWEN_REQUIRED_IMAGES="${AVIC_QWEN_REQUIRED_IMAGES:-12}"
 readonly AVIC_QWEN_MAX_MODEL_LEN="${AVIC_QWEN_MAX_MODEL_LEN:-16384}"
 readonly APEXNAV_LOG_ROOT="${APEXNAV_LOG_ROOT:-$PROJECT_ROOT/logs}"
 readonly APEXNAV_OUTPUT_ROOT="${APEXNAV_OUTPUT_ROOT:-$PROJECT_ROOT/experiments/runs}"
@@ -30,6 +39,7 @@ run_full=false
 need_video=false
 startup_timeout=300
 avic_mode="apexnav"
+avic_shadow=false
 avic_service_url="${AVIC_SERVICE_URL:-http://127.0.0.1:${AVIC_BRIDGE_PORT}}"
 avic_timeout="180"
 avic_warmup_steps="26"
@@ -40,8 +50,9 @@ avic_score_high="0.227590"
 avic_max_score_gap="0.01"
 avic_real_weight="0.5"
 avic_imagination_weight="0.5"
+avic_score_mode="strict_evidence"
 avic_min_score_spread="0.0001"
-avic_cache_radius="0.5"
+avic_cache_radius="0.10"
 avic_cache_yaw_deg="15.0"
 avic_anchor_fov_deg="90.0"
 avic_anchor_max_distance="8.0"
@@ -53,6 +64,10 @@ max_episodes="0"
 episode_manifest=""
 result_dir=""
 detach=false
+follow=false
+reuse_vlm_services=false
+accept_existing_perception=false
+ros_port=11311
 
 usage() {
     cat <<'EOF'
@@ -66,6 +81,7 @@ Options:
   --video                        Save evaluation video
   --startup-timeout SECONDS      Model/ROS startup timeout (default: 300)
   --avic-mode apexnav|avic       Navigation mode; avic auto-starts Qwen + SVC bridge
+  --avic-shadow                 Compute AVIC proposals but never send them to planner
   --avic-service-url URL         AVIC bridge URL (default: http://127.0.0.1:8091)
   --avic-timeout SECONDS         Per-request timeout (default: 180)
   --avic-warmup-steps N          Skip ApexNav initialization actions (default: 26)
@@ -74,11 +90,12 @@ Options:
   --avic-score-low X             Frozen lower score percentile (default: 0.191149)
   --avic-score-high X            Frozen upper score percentile (default: 0.227590)
   --avic-max-score-gap X         Max top-two real-score gap for G1 (default: 0.01)
-  --avic-real-weight X           Legacy/mock compatibility option (default: 0.5)
-  --avic-imagination-weight X    Legacy/mock compatibility option (default: 0.5)
+  --avic-real-weight X           Weight normalization in grounded_delta (default: 0.5)
+  --avic-imagination-weight X    Prediction weight in grounded_delta (default: 0.5)
+  --avic-score-mode MODE         strict_evidence (default) or grounded_delta
   --avic-min-score-spread X      Legacy/mock compatibility option (default: 0.0001)
-  --avic-cache-radius METERS     Episode cache match radius (default: 0.5)
-  --avic-cache-yaw-deg DEGREES   Legacy option; cache now matches physical position (default: 15.0)
+  --avic-cache-radius METERS     Evidence-context cache match radius (default: 0.10)
+  --avic-cache-yaw-deg DEGREES   Cache query-direction tolerance (default: 15.0)
   --avic-anchor-fov-deg DEGREES  Real anchor horizontal FOV (default: 90.0)
   --avic-anchor-max-distance M   Maximum anchor-to-frontier distance (default: 8.0)
   --avic-anchor-min-quality X    Minimum real-anchor quality (default: 0.35)
@@ -89,6 +106,10 @@ Options:
   --episode-manifest PATH        Run the exact episodes listed in a JSON manifest
   --result-dir PATH              Result parent; each run creates a timestamp child
   --detach                       Run independently of the current VSCode/SSH terminal
+  --follow                       Follow detached progress (Ctrl+C only stops viewing)
+  --reuse-vlm-services           Reuse verified idle local perception services; never stop them
+  --reuse-existing-perception    Explicitly authorize existing HTTP model deployment; verify inference contract, not owner/weight identity
+  --ros-port N                   Dedicated local ROS master port (default: 11311)
   -h, --help                     Show this help
 
 Examples:
@@ -121,10 +142,32 @@ while (($#)); do
             need_video=true
             shift
             ;;
+        --follow)
+            follow=true
+            shift
+            ;;
+        --reuse-vlm-services)
+            reuse_vlm_services=true
+            shift
+            ;;
+        --reuse-existing-perception)
+            reuse_vlm_services=true
+            accept_existing_perception=true
+            shift
+            ;;
+        --ros-port)
+            [[ $# -ge 2 ]] || { echo '--ros-port requires a value' >&2; exit 2; }
+            ros_port="$2"
+            shift 2
+            ;;
         --startup-timeout)
             [[ $# -ge 2 ]] || { echo "--startup-timeout requires a value" >&2; exit 2; }
             startup_timeout="$2"
             shift 2
+            ;;
+        --avic-shadow)
+            avic_shadow=true
+            shift
             ;;
         --avic-mode)
             [[ $# -ge 2 ]] || { echo "--avic-mode requires a value" >&2; exit 2; }
@@ -179,6 +222,12 @@ while (($#)); do
         --avic-imagination-weight)
             [[ $# -ge 2 ]] || { echo "--avic-imagination-weight requires a value" >&2; exit 2; }
             avic_imagination_weight="$2"
+            shift 2
+            ;;
+        --avic-score-mode)
+            [[ $# -ge 2 ]] || { echo "--avic-score-mode requires a value" >&2; exit 2; }
+            avic_score_mode="$2"
+            case "$avic_score_mode" in strict_evidence|grounded_delta|frontier_once|image_glm|text_frontier) ;; *) echo "Invalid score mode" >&2; exit 2;; esac
             shift 2
             ;;
         --avic-min-score-spread)
@@ -262,11 +311,47 @@ case "$dataset" in
     hm3dv1|hm3dv2|mp3d) ;;
     *) echo "Unsupported dataset: $dataset" >&2; exit 2 ;;
 esac
+if [[ ! "$ros_port" =~ ^[0-9]+$ ]] || ((10#$ros_port < 1024 || 10#$ros_port > 65535)); then
+    echo '--ros-port must be in [1024,65535]' >&2; exit 2
+fi
+export ROS_MASTER_URI="http://127.0.0.1:${ros_port}"
+export ROS_HOSTNAME=127.0.0.1
+unset ROS_IP
+if [[ "$follow" == true && "$detach" != true ]]; then
+    echo '--follow requires --detach' >&2; exit 2
+fi
 
 case "$avic_mode" in
     apexnav|avic) ;;
     *) echo "Unsupported AVIC mode: $avic_mode" >&2; exit 2 ;;
 esac
+
+if [[ "$avic_score_mode" == image_glm ]];then
+    [[ "$avic_mode" == avic && "${APEXNAV_IMAGE_GLM:-0}" == 1 && "${APEXNAV_RELAXED_IMAGINATION:-0}" != 1 ]] || {
+        echo 'image_glm requires the dedicated image/GLM launcher' >&2;exit 2;
+    }
+fi
+if [[ "${APEXNAV_RELAXED_IMAGINATION:-0}" == 1 ]]; then
+    [[ "$avic_mode" == avic && "$avic_score_mode" == grounded_delta &&
+       "${APEXNAV_ALIGNED_BASE_EXPERIMENT:-0}" != 1 &&
+       "${APEXNAV_FRONTIER_ONCE:-0}" != 1 ]] || {
+        echo 'Relaxed imagination requires AVIC grounded_delta and no aligned-base/frontier-once experiment.' >&2
+        exit 2
+    }
+fi
+if [[ "$avic_score_mode" == frontier_once ]]; then
+    [[ "$avic_mode" == avic && "${APEXNAV_FRONTIER_ONCE:-0}" == 1 ]] || {
+        echo 'frontier_once requires scripts/run_frontier_once10.sh (matching Python/C++ mode).' >&2
+        exit 2
+    }
+elif [[ "${APEXNAV_FRONTIER_ONCE:-0}" == 1 ]]; then
+    echo 'Unset APEXNAV_FRONTIER_ONCE before running a standard mode.' >&2
+    exit 2
+fi
+if [[ "$avic_score_mode" != frontier_once && "$frontier_refresh_enabled" == 1 ]]; then
+    echo 'Score refresh is only supported with frontier_once mode' >&2
+    exit 2
+fi
 
 if [[ "$run_full" == false && ! "$episode" =~ ^[0-9]+$ ]]; then
     echo "--episode must be a non-negative integer" >&2
@@ -322,7 +407,12 @@ if [[ "$detach" == true ]]; then
         detached_args+=(--video)
     fi
     detached_args+=(--startup-timeout "$startup_timeout")
+    detached_args+=(--ros-port "$ros_port")
+    if [[ "$accept_existing_perception" == true ]]; then
+        detached_args+=(--reuse-existing-perception)
+    elif [[ "$reuse_vlm_services" == true ]]; then detached_args+=(--reuse-vlm-services); fi
     detached_args+=(--avic-mode "$avic_mode")
+    if [[ "$avic_shadow" == true ]]; then detached_args+=(--avic-shadow); fi
     detached_args+=(--avic-service-url "$avic_service_url")
     detached_args+=(--avic-timeout "$avic_timeout")
     detached_args+=(--avic-warmup-steps "$avic_warmup_steps")
@@ -333,6 +423,7 @@ if [[ "$detach" == true ]]; then
     detached_args+=(--avic-max-score-gap "$avic_max_score_gap")
     detached_args+=(--avic-real-weight "$avic_real_weight")
     detached_args+=(--avic-imagination-weight "$avic_imagination_weight")
+    detached_args+=(--avic-score-mode "$avic_score_mode")
     detached_args+=(--avic-min-score-spread "$avic_min_score_spread")
     detached_args+=(--avic-cache-radius "$avic_cache_radius")
     detached_args+=(--avic-cache-yaw-deg "$avic_cache_yaw_deg")
@@ -369,6 +460,10 @@ if [[ "$detach" == true ]]; then
     echo "PID file: $detached_pid"
     echo "Log: $detached_log"
     echo "Observe: tail -f $detached_log"
+    if [[ "$follow" == true ]]; then
+        echo 'Following progress; Ctrl+C only stops viewing, not the detached experiment.'
+        tail --pid="$detached_process" -n 80 -F "$detached_log"
+    fi
     exit 0
 fi
 
@@ -394,7 +489,97 @@ set +u
 source "$conda_setup"
 conda activate "$CONDA_ENV"
 set -u
+readonly evaluation_prefix="$CONDA_PREFIX"
+readonly evaluation_python="$evaluation_prefix/bin/python"
 cd "$PROJECT_ROOT"
+
+# Private entry used only by run_upstream_apexnav.sh. It does not toggle the
+# current planner into a "base" mode: it selects a separate frozen workspace.
+planner_root="$PROJECT_ROOT"
+upstream_root="${APEXNAV_UPSTREAM_COMPAT_ROOT:-}"
+if [[ -z "$upstream_root" && "$avic_mode" == apexnav ]]; then
+    echo "[DIAGNOSTIC_ONLY] Current workspace with AVIC off; NOT the official baseline. Use run_upstream_apexnav.sh for Apexnav_1."
+fi
+export APEXNAV_STAGNATION_RECOVERY="${APEXNAV_STAGNATION_RECOVERY:-false}"
+case "$APEXNAV_STAGNATION_RECOVERY" in true|false) ;; *)
+    echo "APEXNAV_STAGNATION_RECOVERY must be true or false" >&2; exit 2;; esac
+if [[ "$APEXNAV_STAGNATION_RECOVERY" == true && ( -n "$upstream_root" || "$avic_mode" != apexnav || "$avic_shadow" == true ) ]]; then
+    echo "Recovery experiment requires current apexnav mode, no SVC/shadow or upstream override." >&2
+    exit 2
+fi
+if [[ -n "$upstream_root" ]]; then
+    if [[ "$upstream_root" != "$(dirname -- "$PROJECT_ROOT")/Apexnav_1/runtime" ]]; then
+        echo "Baseline runs must use the verified GitHub download: Apexnav_1/runtime" >&2
+        exit 2
+    fi
+    if [[ "$avic_mode" != apexnav || "$avic_shadow" == true || -z "$episode_manifest" ]]; then
+        echo "Upstream baseline requires apexnav mode and an explicit manifest; no shadow." >&2
+        exit 2
+    fi
+    "$evaluation_python" "$PROJECT_ROOT/scripts/verify_upstream_baseline.py" "$upstream_root"
+    planner_root="$upstream_root"
+fi
+
+# build/ and devel/ are intentionally not stored in Git. Recreate them on a
+# clean checkout (or after planner sources change) before starting expensive
+# vision services. Use the system CMake/ROS tools: the ApexNav Conda
+# environment contains an older CMake and an incomplete rosversion executable.
+workspace_setup="$planner_root/devel/setup.bash"
+workspace_node="$planner_root/devel/lib/exploration_manager/exploration_node"
+workspace_needs_build=false
+if [[ ! -r "$workspace_setup" || ! -x "$workspace_node" ]]; then
+    workspace_needs_build=true
+elif find "$planner_root/src" \
+    -path "$planner_root/src/planner/utils/lkh_mtsp_solver/resource" -prune -o \
+    -type f -newer "$workspace_node" -print -quit | grep -q .; then
+    workspace_needs_build=true
+fi
+if [[ -n "$upstream_root" && "$PROJECT_ROOT/scripts/upstream_compat.cmake" -nt "$workspace_node" ]]; then
+    workspace_needs_build=true
+fi
+if [[ "$workspace_needs_build" == true ]]; then
+    echo "[ApexNav] Building ROS workspace..."
+    build_extra=()
+    if [[ -n "$upstream_root" ]]; then
+        # New Boost no longer exports legacy bind placeholders transitively.
+        # Force the compatibility header without editing upstream C++ logic.
+        build_extra+=("-DCMAKE_PROJECT_INCLUDE=$PROJECT_ROOT/scripts/upstream_compat.cmake"
+            "-DCMAKE_PREFIX_PATH=/usr")
+    fi
+    PATH="/usr/bin:$PATH" catkin_make -C "$planner_root" --force-cmake -j4 -l4 \
+        -DPYTHON_EXECUTABLE="$evaluation_python" \
+        -DCMAKE_BUILD_TYPE=Release "${build_extra[@]}"
+fi
+
+set +u
+# shellcheck disable=SC1090
+source "$workspace_setup"
+set -u
+ros_pythonpath="${PYTHONPATH:-}"
+# Catkin may prepend a recorded base-Conda underlay. Pin evaluation to the
+# environment activated above, while keeping native ROS's Python path separate.
+export PATH="$evaluation_prefix/bin:$PATH"
+conda_site="$("$evaluation_python" -c 'import sysconfig; print(sysconfig.get_path("purelib"))')"
+export PYTHONPATH="$conda_site:${PYTHONPATH:-}"
+if ! PATH="/usr/bin:$PATH" rospack find exploration_manager >/dev/null; then
+    echo "ROS workspace is built but exploration_manager is not discoverable." >&2
+    exit 1
+fi
+if [[ -n "$upstream_root" ]]; then
+    # The /usr catkin underlay adds system Python 3.10 packages. Keep the
+    # active Conda ABI ahead of them; ROS Python modules remain available.
+    resolved_package="$(PATH="/usr/bin:$PATH" rospack find exploration_manager)"
+    if [[ "$resolved_package" != "$upstream_root/src/planner/exploration_manager" ]]; then
+        echo "Wrong ROS planner package for upstream baseline: $resolved_package" >&2
+        exit 1
+    fi
+fi
+
+echo "[ApexNav] Evaluation Python: $evaluation_python"
+"$evaluation_python" -c 'import hydra, habitat, rospy; import plan_env.msg' || {
+    echo "Evaluation environment preflight failed; no vision services have been started." >&2
+    exit 1
+}
 
 timestamp="$(date +%Y%m%d_%H%M%S)"
 log_dir="$APEXNAV_LOG_ROOT/one_click/${timestamp}_$$"
@@ -411,6 +596,10 @@ else
 fi
 result_dir="${result_parent%/}/${timestamp}"
 mkdir -p "$result_dir"
+if [[ -n "$upstream_root" ]]; then
+    cp -- "$upstream_root/../SOURCE.json" "$result_dir/baseline_source.json"
+    cp -- "$upstream_root/../compatibility.patch" "$result_dir/baseline_compatibility.patch"
+fi
 echo "Result directory: $result_dir"
 
 avic_output_root="$result_dir/avic_imagination"
@@ -546,12 +735,12 @@ ensure_local_avic_stack() {
     echo "  Qwen ready: $AVIC_QWEN_MODEL"
 
     echo "[AVIC] Verifying Qwen multi-image capacity..."
-    if ! python -m avic_bridge.qwen_preflight \
+    if ! "$evaluation_python" -m avic_bridge.qwen_preflight \
         --base-url "http://127.0.0.1:${AVIC_QWEN_PORT}/v1" \
         --model "$AVIC_QWEN_MODEL" \
-        --images "$AVIC_QWEN_REQUIRED_IMAGES" \
+        --images "$AVIC_QWEN_MAX_IMAGES_PER_PROMPT" \
         --timeout "$startup_timeout"; then
-        echo "Qwen cannot accept the ${AVIC_QWEN_REQUIRED_IMAGES}-image AVIC verifier request." >&2
+        echo "Qwen cannot accept the ${AVIC_QWEN_MAX_IMAGES_PER_PROMPT}-image AVIC verifier request." >&2
         echo "If port ${AVIC_QWEN_PORT} was reused, stop that stale Qwen service and retry." >&2
         echo "ApexNav evaluation has not started." >&2
         return 1
@@ -563,6 +752,7 @@ ensure_local_avic_stack() {
     else
         start_background avic_bridge env \
             AVIC_OUTPUT_ROOT="$avic_output_root" \
+            AVIC_QWEN_MAX_IMAGES_PER_PROMPT="$AVIC_QWEN_MAX_IMAGES_PER_PROMPT" \
             "$PROJECT_ROOT/scripts/run_avic_service.sh" \
             --backend svc_qwen \
             --host 127.0.0.1 \
@@ -580,6 +770,14 @@ ensure_local_avic_stack() {
         echo "AVIC bridge is not healthy: $avic_health" >&2
         return 1
     fi
+    if [[ "$avic_score_mode" == frontier_once && "$avic_health" != *'frontier_once_spatial_q25_half_v1_20260923'* ]]; then
+        echo 'Existing bridge does not support frontier_once. Stop that old bridge and retry.' >&2
+        return 1
+    fi
+    if [[ "$avic_score_mode" == frontier_once && "$frontier_refresh_enabled" == 1 && "$avic_health" != *'frontier_score_delta_refresh_v1_20260925'* ]]; then
+        echo 'Existing bridge lacks score-refresh audit support. Stop that old bridge and retry.' >&2
+        return 1
+    fi
     if [[ "$avic_health" != *'"backend": "svc_qwen"'* && \
           "$avic_health" != *'"backend":"svc_qwen"'* ]]; then
         echo "Port $AVIC_BRIDGE_PORT is not running the svc_qwen backend." >&2
@@ -590,9 +788,14 @@ ensure_local_avic_stack() {
         echo "Port $AVIC_BRIDGE_PORT is running a stale AVIC bridge. Stop it and retry." >&2
         return 1
     fi
-    if [[ "$avic_health" != *'"gate_contract": "frontier_anchor_multiframe_verifier_v1"'* && \
-          "$avic_health" != *'"gate_contract":"frontier_anchor_multiframe_verifier_v1"'* ]]; then
+    if [[ "$avic_health" != *'"gate_contract": "frontier_anchor_grounded_verifier_v2"'* && \
+          "$avic_health" != *'"gate_contract":"frontier_anchor_grounded_verifier_v2"'* ]]; then
         echo "Port $AVIC_BRIDGE_PORT is running an obsolete G2 call/skip contract. Stop it and retry." >&2
+        return 1
+    fi
+    if [[ "$avic_health" != *'"generation_cache_contract": "svc_input_video_cache_v1"'* && \
+          "$avic_health" != *'"generation_cache_contract":"svc_input_video_cache_v1"'* ]]; then
+        echo "Port $AVIC_BRIDGE_PORT is running an old bridge without SVC input deduplication. Stop it and retry." >&2
         return 1
     fi
     if [[ "$avic_health" != *"\"output_root\": \"$avic_output_root\""* && \
@@ -620,32 +823,77 @@ if [[ "$avic_mode" == "avic" ]]; then
     esac
 fi
 
-for port in 12181 12182 12183 12184 11311; do
+if [[ "${APEXNAV_ALIGNMENT_AUDIT:-0}" == 1 && "$avic_mode" == avic ]]; then
+    alignment_health="$(curl -fsS --max-time 30 "${avic_service_url%/}/health")" || {
+        echo 'Alignment audit requires a reachable current SVC/Qwen bridge.' >&2; exit 1;
+    }
+    if [[ "$avic_score_mode" == image_glm ]];then
+        if ! "$evaluation_python" -c 'import json,sys; h=json.load(sys.stdin); d=h.get("image_alignment_audit_contract",{}); sys.exit(0 if h.get("backend")=="qwen_image_glm" and d.get("schema_version")=="image_glm_single_view_v1" and d.get("enabled") is True else 1)' <<<"$alignment_health";then
+            echo 'Image bridge must enable its current-RGB/real-pose/expected-motion audit contract.' >&2;exit 1
+        fi
+        echo '[IMAGE_ALIGNMENT_AUDIT] real RGB/pose and expected motion recorded; generated camera pose is NOT measured.'
+    else
+        if ! "$evaluation_python" -c 'import json,sys; d=json.load(sys.stdin).get("alignment_audit_contract",{}); sys.exit(0 if d.get("schema_version")=="alignmentaudit_v1" and d.get("enabled") is True else 1)' <<<"$alignment_health"; then
+            echo 'Bridge has not enabled alignmentaudit_v1. Start the current project bridge with APEXNAV_ALIGNMENT_AUDIT=1; no existing service has been stopped.' >&2
+            exit 1
+        fi
+        echo '[ALIGNMENT_AUDIT] Current bridge confirms enabled alignmentaudit_v1.'
+    fi
+fi
+
+for port in "$ros_port"; do
     if port_open "$port"; then
         echo "Port $port is already in use. Stop the previous ApexNav/ROS process first." >&2
         exit 1
     fi
 done
 
+if [[ "$reuse_vlm_services" == true ]]; then
+    reuse_check_args=()
+    if [[ "$accept_existing_perception" == true ]]; then reuse_check_args+=(--accept-existing-owner); fi
+    "$evaluation_python" "$PROJECT_ROOT/scripts/check_reusable_vlm.py" --project "$PROJECT_ROOT" \
+        --output "$result_dir/reused_perception.json" "${reuse_check_args[@]}"
+    echo '[ApexNav] Reusing verified idle perception services; cleanup will not stop them.'
+else
+for port in 12181 12182 12183 12184; do
+    if port_open "$port"; then
+        echo "Perception port $port is occupied. Do not kill unknown processes. Use --reuse-vlm-services only for verified idle project services." >&2
+        exit 1
+    fi
+done
 echo "[ApexNav] Starting four VLM services..."
-start_background grounding_dino python -u -m vlm.detector.grounding_dino --port 12181
-start_background blip2itm python -u -m vlm.itm.blip2itm --port 12182
-start_background mobile_sam python -u -m vlm.segmentor.sam --port 12183
-start_background yolov7 python -u -m vlm.detector.yolov7 --port 12184
+start_background grounding_dino "$evaluation_python" -u -m vlm.detector.grounding_dino --port 12181
+start_background blip2itm "$evaluation_python" -u -m vlm.itm.blip2itm --port 12182
+start_background mobile_sam "$evaluation_python" -u -m vlm.segmentor.sam --port 12183
+start_background yolov7 "$evaluation_python" -u -m vlm.detector.yolov7 --port 12184
 
 wait_for_port grounding_dino 12181
 wait_for_port blip2itm 12182
 wait_for_port mobile_sam 12183
 wait_for_port yolov7 12184
+fi
 
 echo "[ApexNav] Starting ROS exploration nodes..."
-start_background ros roslaunch exploration_manager exploration.launch
-wait_for_port ros 11311
+if [[ -n "$upstream_root" ]]; then
+    start_background ros env PATH="/usr/bin:$PATH" \
+        PYTHONPATH="$ros_pythonpath" \
+        APEXNAV_ROS_WORKSPACE="$planner_root" bash "$PROJECT_ROOT/scripts/ros_native_env.sh" \
+        roslaunch -p "$ros_port" "$PROJECT_ROOT/scripts/upstream_exploration.launch" \
+        "eval_config:=$upstream_root/config/habitat_eval_${dataset}.yaml"
+else
+    start_background ros env PATH="/usr/bin:$PATH" \
+        PYTHONPATH="$ros_pythonpath" \
+        APEXNAV_ROS_WORKSPACE="$planner_root" bash "$PROJECT_ROOT/scripts/ros_native_env.sh" \
+        roslaunch -p "$ros_port" exploration_manager exploration.launch
+fi
+wait_for_port ros "$ros_port"
 
 ros_deadline=$((SECONDS + startup_timeout))
 while true; do
-    ros_nodes="$(timeout 5 rosnode list 2>/dev/null || true)"
-    if grep -qx '/exploration_node' <<<"$ros_nodes" && grep -qx '/tsp_solver' <<<"$ros_nodes"; then
+    ros_nodes="$(timeout 5 env PATH="/usr/bin:$PATH" PYTHONPATH="$ros_pythonpath" rosnode list 2>/dev/null || true)"
+    if grep -qx '/exploration_node' <<<"$ros_nodes" && grep -qx '/tsp_solver' <<<"$ros_nodes" &&
+        timeout 5 env PATH="/usr/bin:$PATH" PYTHONPATH="$ros_pythonpath" /usr/bin/python3 \
+            -c 'import rospy; rospy.wait_for_service("/solve_tsp", timeout=1.0)' >/dev/null 2>&1; then
         break
     fi
     if ! kill -0 "${service_pids[ros]}" 2>/dev/null; then
@@ -654,16 +902,16 @@ while true; do
         exit 1
     fi
     if ((SECONDS >= ros_deadline)); then
-        echo "Timed out waiting for /exploration_node and /tsp_solver." >&2
+        echo "Timed out waiting for /exploration_node, /tsp_solver and /solve_tsp service." >&2
         tail -n 120 "${service_logs[ros]}" >&2 || true
         exit 1
     fi
     sleep 1
 done
-echo "  ROS ready: /exploration_node, /tsp_solver"
+echo "  ROS ready: /exploration_node, /tsp_solver, /solve_tsp service"
 
 eval_command=(
-    python -u habitat_evaluation.py
+    "$evaluation_python" -u habitat_evaluation.py
     --dataset "$dataset"
     --avic-mode "$avic_mode"
     --avic-service-url "$avic_service_url"
@@ -676,6 +924,7 @@ eval_command=(
     --avic-max-score-gap "$avic_max_score_gap"
     --avic-real-weight "$avic_real_weight"
     --avic-imagination-weight "$avic_imagination_weight"
+    --avic-score-mode "$avic_score_mode"
     --avic-min-score-spread "$avic_min_score_spread"
     --avic-cache-radius "$avic_cache_radius"
     --avic-cache-yaw-deg "$avic_cache_yaw_deg"
@@ -690,12 +939,21 @@ eval_command=(
 if [[ -n "$episode_manifest" ]]; then
     eval_command+=(--episode-manifest "$episode_manifest")
 fi
+if [[ "$avic_shadow" == true ]]; then eval_command+=(--avic-shadow); fi
 eval_command+=(--result-dir "$result_dir")
 if [[ "$run_full" == false ]]; then
     eval_command+=("test_epi_num=${episode}")
 fi
 if [[ "$need_video" == true ]]; then
     eval_command+=("need_video=true")
+fi
+if [[ -n "$upstream_root" ]]; then
+    eval_command=("$evaluation_python" -u "$PROJECT_ROOT/scripts/evaluate_upstream.py"
+        --workspace "$upstream_root" --dataset "$dataset"
+        --episode-manifest "$episode_manifest" --max-episodes "$max_episodes"
+        --result-dir "$result_dir")
+    if [[ "$need_video" == true ]]; then eval_command+=(--video); fi
+    echo "[UPSTREAM_BASELINE] Fresh official GitHub 049971b; workspace=$upstream_root; isolated compatibility patch; shared perception services"
 fi
 
 echo "[ApexNav] Running Habitat evaluation..."

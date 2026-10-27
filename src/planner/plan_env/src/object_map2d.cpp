@@ -544,7 +544,7 @@ void ObjectMap2D::getTopConfidenceObjectCloud(
   // TODO: May need logic adjustment for relaxed no limited_confidence conditions
   if (!limited_confidence) {
     // Include all objects without confidence filtering
-    for (auto object : objects_) top_objects.push_back(object);
+    for (auto object : objects_) if(!reviewExcluded(object.id_))top_objects.push_back(object);
 
     // Sort by confidence score in descending order
     std::sort(
@@ -577,6 +577,7 @@ void ObjectMap2D::getTopConfidenceObjectCloud(
 
       // Include all object cells regardless of confidence
       for (auto object : objects_) {
+        if(reviewExcluded(object.id_))continue;
         for (auto cell : object.cells_) {
           pcl::PointXYZ point;
           point.x = cell(0);
@@ -591,6 +592,7 @@ void ObjectMap2D::getTopConfidenceObjectCloud(
   else {
     // Apply confidence filtering with functional scoring
     for (auto object : objects_) {
+      if(reviewExcluded(object.id_))continue;
       int max_func_score = 0, best_label = -1;
 
       // Find best label using functional score (observation count * confidence)
@@ -637,6 +639,23 @@ bool ObjectMap2D::isConfidenceObject(const ObjectCluster& obj)
       obj.observation_nums_[0] >= min_observation_num_)
     return true;
   return false;
+}
+
+int ObjectMap2D::reviewInstance(const pcl::PointCloud<pcl::PointXYZ>& cloud) {
+  std::unordered_map<int,int> counts;int valid=0,best=-1,n=0;
+  for(const auto& p:cloud) {
+    Vector2d xy(p.x,p.y);if(!xy.allFinite() || !sdf_map_->isInMap(xy))continue;
+    // getObjectGrid() returns a semantic label, NOT an instance identifier.
+    ++valid;const int id=object_indexs_[toAdr(xy)];
+    if(id>=0 && ++counts[id]>n){best=id;n=counts[id];}
+  }
+  return n>0 && n*2>=valid?best:-1;
+}
+
+bool ObjectMap2D::reviewBounds(int id,Vector3d& lower,Vector3d& upper) const {
+  if(id<0 || id>=int(objects_.size()) || objects_[id].id_!=id)return false;
+  lower=objects_[id].box_min3d_;upper=objects_[id].box_max3d_;
+  return lower.allFinite() && upper.allFinite();
 }
 
 }  // namespace apexnav_planner

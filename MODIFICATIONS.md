@@ -1,19 +1,12 @@
-# Modifications to ApexNav
+# Research-fork modifications
 
-This fork is based on upstream ApexNav commit `049971b` and keeps the upstream
-Git history, copyright notices, citations, and GNU GPL v3 license.
+This fork retains ApexNav attribution and licensing. The current research path uses real frontier observations and independent object-presence probabilities to assist exploration. Stable SR improvement has not been demonstrated.
 
-The experimental changes prepared on 2026-09-05 include:
+- [Current architecture and retained historical work](docs/CORE_AND_HISTORY.zh-CN.md)
+- [Project progress and next steps](docs/PROJECT_PLAN.zh-CN.md)
+- [Code changes and measured experiment results](docs/CHANGELOG.zh-CN.md)
+- [2026-10-27 cleanup inventory](docs/CLEANUP_MANIFEST.json)
 
-- a process-isolated `avic_bridge` for optional SVC/Qwen visual imagination;
-- a versioned HTTP protocol, fail-open controller, real-observation anchors,
-  per-episode frontier caching, and bounded temporary score bonuses;
-- ROS/C++ frontier candidate publication and acknowledgement support;
-- observation-evidence support in the value-map interface;
-- exact episode-manifest execution and isolated result directories;
-- portable launcher configuration, tests, and research-status documentation;
-- compatibility fixes required by the validated local ROS/Habitat environment.
+The working planner includes synchronous observations, bounded path search, TSP recovery and search-point confirmation. It is not equivalent to pristine ApexNav when the optional VLM is disabled. Official baseline experiments use the separately downloaded, verified `Apexnav_1/runtime` workspace.
 
-The AVIC path is disabled by default (`--avic-mode apexnav`). It remains an
-experimental research feature and has not yet demonstrated an improvement over
-the upstream ApexNav baseline. See `docs/CURRENT_RESULTS.zh-CN.md`.
+Historical image/video experiment entrypoints were removed from the active tree after a local source backup. Shared compatibility modules remain where deleting them would change runtime imports or existing planning behavior. Datasets, checkpoints, credentials and generated experiment artifacts are not distributed here.

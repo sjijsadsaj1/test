@@ -3,6 +3,11 @@
 
 // Third-party libraries
 #include <Eigen/Eigen>
+#include <exploration_manager/stagnation_recovery.h>
+#include <exploration_manager/avic_route_commitment.h>
+#include <exploration_manager/target_confirmation.h>
+#include <exploration_manager/hypothesis_progress.h>
+#include <exploration_manager/recovery_handoff.h>
 
 // Standard C++ libraries
 #include <cstdint>
@@ -12,6 +17,9 @@
 
 // ROS core
 #include <ros/ros.h>
+#include <plan_env/PlanObservation.h>
+#include <plan_env/ReviewTarget.h>
+#include <set>
 
 // ROS message types
 #include <geometry_msgs/PoseStamped.h>
@@ -77,6 +85,11 @@ enum ROS_STATE { INIT, WAIT_TRIGGER, PLAN_ACTION, WAIT_ACTION_FINISH, PUB_ACTION
 enum ACTION { STOP, MOVE_FORWARD, TURN_LEFT, TURN_RIGHT, TURN_DOWN, TURN_UP };
 enum HABITAT_STATE { READY, ACTION_EXEC, ACTION_FINISH, EPISODE_FINISH };
 class ExplorationFSM {
+  bool stagnation_recovery_enabled_{false};
+  StagnationRecovery stagnation_recovery_;
+  int recovery_exclusion_until_{-1};
+  Vector2d recovery_excluded_goal_{Vector2d::Zero()};
+  void applyStagnationRecovery(const Vector2d& pos, bool eligible);
 private:
   /* Planning Utils */
   ros::NodeHandle nh_;
@@ -99,7 +112,37 @@ private:
   bool frontier_query_active_{false};
   bool frontier_query_eligible_this_cycle_{false};
   bool have_last_frontier_target_{false};
+  AvicRouteCommitment avic_route_commitment_;
+  TargetConfirmation target_confirmation_;
+  TargetConfirmation fresh_confirmation_;
+  std::vector<std::pair<int, std::vector<Vector2d>>> fresh_target_frames_;
+  int open_escape_deadline_{-1}, open_escape_cooldown_{-1}, open_escape_attempts_{0};
+  Vector2d open_escape_goal_{Vector2d::Zero()};
+  RecoveryHandoff open_escape_handoff_;
+  Vector2d open_escape_legacy_pos_{Vector2d::Zero()};
+  double open_escape_legacy_yaw_{0.0};
+  HypothesisProgress hypothesis_progress_;
+  bool target_confirmation_enabled_{true};
+  bool confirmSearchPoint(const Vector2d& current_pos);
+  int avic_route_commit_steps_{6};
+  void releaseAvicRoute(const char* reason);
+  void applyAvicRoute(const Vector2d& current_pos, int exploration_result);
   Vector2d last_frontier_target_{Vector2d::Zero()};
+  bool synchronous_observations_{false};
+  ros::ServiceServer observation_service_;
+  ros::ServiceServer review_service_;
+  std::vector<int> review_detection_instances_;
+  int review_command_step_{-1},review_command_op_{-1},review_command_id_{-1};
+  plan_env::ReviewTarget::Response review_command_response_;
+  bool reviewTarget(plan_env::ReviewTarget::Request&,plan_env::ReviewTarget::Response&);
+  std::string observation_episode_;
+  std::set<std::string> retired_observation_episodes_;
+  int observation_step_{-1};
+  bool observation_failed_{false};
+  int last_exploration_result_{0};
+  std_msgs::Float32MultiArray frontier_snapshot_;
+  plan_env::PlanObservation::Response observation_response_;
+  std::vector<uint8_t> observation_request_bytes_;
 
   /* ROS Utils */
   ros::NodeHandle node_;
@@ -144,6 +187,8 @@ private:
   void executedActionCallback(const std_msgs::Int32ConstPtr& msg);
   void avicFrontierScoresCallback(const std_msgs::Float32MultiArrayConstPtr& msg);
   void confidenceThresholdCallback(const std_msgs::Float64ConstPtr& msg);
+  bool planObservation(plan_env::PlanObservation::Request& req,
+      plan_env::PlanObservation::Response& res);
 
 public:
   ExplorationFSM() = default;

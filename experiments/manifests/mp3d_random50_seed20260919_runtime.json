@@ -1,0 +1,1523 @@
+{
+  "name": "mp3d_random50_seed20260919_runtime",
+  "dataset": "mp3d",
+  "split": "val",
+  "criteria": {
+    "random_seed": 20260919,
+    "sample_size": 50,
+    "eligible_episode_count": 1900,
+    "excluded_unique_episode_count": 295,
+    "method": "uniform without replacement; no outcome selection",
+    "episode_id_semantics": "Habitat runtime per-scene array index, NOT raw JSON episode_id"
+  },
+  "excluded_keys": [
+    [
+      "2azQ1b91cZZ",
+      "0"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "1"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "10"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "105"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "11"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "12"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "125"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "13"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "14"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "140"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "15"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "156"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "158"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "16"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "160"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "165"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "17"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "173"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "175"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "179"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "18"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "19"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "191"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "192"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "194"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "2"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "20"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "21"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "22"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "23"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "24"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "25"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "26"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "27"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "28"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "29"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "3"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "30"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "31"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "32"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "33"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "34"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "35"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "36"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "37"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "38"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "39"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "4"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "40"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "41"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "42"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "43"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "44"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "45"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "46"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "47"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "48"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "49"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "5"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "52"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "57"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "6"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "61"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "68"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "7"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "8"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "85"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "87"
+    ],
+    [
+      "2azQ1b91cZZ",
+      "9"
+    ],
+    [
+      "8194nk5LbLH",
+      "120"
+    ],
+    [
+      "8194nk5LbLH",
+      "122"
+    ],
+    [
+      "8194nk5LbLH",
+      "124"
+    ],
+    [
+      "8194nk5LbLH",
+      "15"
+    ],
+    [
+      "8194nk5LbLH",
+      "152"
+    ],
+    [
+      "8194nk5LbLH",
+      "157"
+    ],
+    [
+      "8194nk5LbLH",
+      "17"
+    ],
+    [
+      "8194nk5LbLH",
+      "189"
+    ],
+    [
+      "8194nk5LbLH",
+      "193"
+    ],
+    [
+      "8194nk5LbLH",
+      "200"
+    ],
+    [
+      "8194nk5LbLH",
+      "32"
+    ],
+    [
+      "8194nk5LbLH",
+      "35"
+    ],
+    [
+      "8194nk5LbLH",
+      "45"
+    ],
+    [
+      "8194nk5LbLH",
+      "49"
+    ],
+    [
+      "8194nk5LbLH",
+      "53"
+    ],
+    [
+      "8194nk5LbLH",
+      "55"
+    ],
+    [
+      "8194nk5LbLH",
+      "66"
+    ],
+    [
+      "8194nk5LbLH",
+      "71"
+    ],
+    [
+      "8194nk5LbLH",
+      "88"
+    ],
+    [
+      "8194nk5LbLH",
+      "95"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "0"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "10"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "105"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "121"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "124"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "136"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "146"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "151"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "171"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "174"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "2"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "23"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "26"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "35"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "43"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "48"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "56"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "59"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "62"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "72"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "80"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "83"
+    ],
+    [
+      "EU6Fwq7SyZv",
+      "92"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "116"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "141"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "142"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "143"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "15"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "151"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "153"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "164"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "166"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "171"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "186"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "195"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "39"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "45"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "66"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "73"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "82"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "89"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "9"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "92"
+    ],
+    [
+      "QUCTc6BB5sX",
+      "94"
+    ],
+    [
+      "TbHJrupSAjP",
+      "105"
+    ],
+    [
+      "TbHJrupSAjP",
+      "119"
+    ],
+    [
+      "TbHJrupSAjP",
+      "123"
+    ],
+    [
+      "TbHJrupSAjP",
+      "128"
+    ],
+    [
+      "TbHJrupSAjP",
+      "139"
+    ],
+    [
+      "TbHJrupSAjP",
+      "149"
+    ],
+    [
+      "TbHJrupSAjP",
+      "162"
+    ],
+    [
+      "TbHJrupSAjP",
+      "164"
+    ],
+    [
+      "TbHJrupSAjP",
+      "17"
+    ],
+    [
+      "TbHJrupSAjP",
+      "174"
+    ],
+    [
+      "TbHJrupSAjP",
+      "185"
+    ],
+    [
+      "TbHJrupSAjP",
+      "186"
+    ],
+    [
+      "TbHJrupSAjP",
+      "188"
+    ],
+    [
+      "TbHJrupSAjP",
+      "20"
+    ],
+    [
+      "TbHJrupSAjP",
+      "38"
+    ],
+    [
+      "TbHJrupSAjP",
+      "46"
+    ],
+    [
+      "TbHJrupSAjP",
+      "47"
+    ],
+    [
+      "TbHJrupSAjP",
+      "52"
+    ],
+    [
+      "TbHJrupSAjP",
+      "55"
+    ],
+    [
+      "TbHJrupSAjP",
+      "58"
+    ],
+    [
+      "TbHJrupSAjP",
+      "78"
+    ],
+    [
+      "TbHJrupSAjP",
+      "88"
+    ],
+    [
+      "TbHJrupSAjP",
+      "92"
+    ],
+    [
+      "TbHJrupSAjP",
+      "98"
+    ],
+    [
+      "X7HyMhZNoso",
+      "103"
+    ],
+    [
+      "X7HyMhZNoso",
+      "118"
+    ],
+    [
+      "X7HyMhZNoso",
+      "131"
+    ],
+    [
+      "X7HyMhZNoso",
+      "138"
+    ],
+    [
+      "X7HyMhZNoso",
+      "140"
+    ],
+    [
+      "X7HyMhZNoso",
+      "171"
+    ],
+    [
+      "X7HyMhZNoso",
+      "172"
+    ],
+    [
+      "X7HyMhZNoso",
+      "173"
+    ],
+    [
+      "X7HyMhZNoso",
+      "174"
+    ],
+    [
+      "X7HyMhZNoso",
+      "22"
+    ],
+    [
+      "X7HyMhZNoso",
+      "23"
+    ],
+    [
+      "X7HyMhZNoso",
+      "32"
+    ],
+    [
+      "X7HyMhZNoso",
+      "43"
+    ],
+    [
+      "X7HyMhZNoso",
+      "44"
+    ],
+    [
+      "X7HyMhZNoso",
+      "47"
+    ],
+    [
+      "X7HyMhZNoso",
+      "50"
+    ],
+    [
+      "X7HyMhZNoso",
+      "53"
+    ],
+    [
+      "X7HyMhZNoso",
+      "55"
+    ],
+    [
+      "X7HyMhZNoso",
+      "65"
+    ],
+    [
+      "X7HyMhZNoso",
+      "69"
+    ],
+    [
+      "X7HyMhZNoso",
+      "7"
+    ],
+    [
+      "X7HyMhZNoso",
+      "87"
+    ],
+    [
+      "X7HyMhZNoso",
+      "93"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "102"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "110"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "117"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "124"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "137"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "141"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "156"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "163"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "17"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "185"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "190"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "32"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "38"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "41"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "52"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "54"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "58"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "67"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "7"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "70"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "84"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "88"
+    ],
+    [
+      "Z6MFQCViBuw",
+      "96"
+    ],
+    [
+      "oLBMNvg9in8",
+      "102"
+    ],
+    [
+      "oLBMNvg9in8",
+      "104"
+    ],
+    [
+      "oLBMNvg9in8",
+      "107"
+    ],
+    [
+      "oLBMNvg9in8",
+      "110"
+    ],
+    [
+      "oLBMNvg9in8",
+      "114"
+    ],
+    [
+      "oLBMNvg9in8",
+      "116"
+    ],
+    [
+      "oLBMNvg9in8",
+      "139"
+    ],
+    [
+      "oLBMNvg9in8",
+      "149"
+    ],
+    [
+      "oLBMNvg9in8",
+      "15"
+    ],
+    [
+      "oLBMNvg9in8",
+      "150"
+    ],
+    [
+      "oLBMNvg9in8",
+      "159"
+    ],
+    [
+      "oLBMNvg9in8",
+      "161"
+    ],
+    [
+      "oLBMNvg9in8",
+      "162"
+    ],
+    [
+      "oLBMNvg9in8",
+      "164"
+    ],
+    [
+      "oLBMNvg9in8",
+      "165"
+    ],
+    [
+      "oLBMNvg9in8",
+      "168"
+    ],
+    [
+      "oLBMNvg9in8",
+      "169"
+    ],
+    [
+      "oLBMNvg9in8",
+      "178"
+    ],
+    [
+      "oLBMNvg9in8",
+      "179"
+    ],
+    [
+      "oLBMNvg9in8",
+      "185"
+    ],
+    [
+      "oLBMNvg9in8",
+      "19"
+    ],
+    [
+      "oLBMNvg9in8",
+      "22"
+    ],
+    [
+      "oLBMNvg9in8",
+      "3"
+    ],
+    [
+      "oLBMNvg9in8",
+      "41"
+    ],
+    [
+      "oLBMNvg9in8",
+      "48"
+    ],
+    [
+      "oLBMNvg9in8",
+      "63"
+    ],
+    [
+      "oLBMNvg9in8",
+      "75"
+    ],
+    [
+      "oLBMNvg9in8",
+      "81"
+    ],
+    [
+      "oLBMNvg9in8",
+      "91"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "104"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "108"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "110"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "125"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "126"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "129"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "130"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "140"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "166"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "193"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "33"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "48"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "57"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "63"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "64"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "73"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "86"
+    ],
+    [
+      "pLe4wQe7qrG",
+      "99"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "102"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "11"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "12"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "133"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "144"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "148"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "156"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "16"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "184"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "188"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "27"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "44"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "48"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "68"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "71"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "73"
+    ],
+    [
+      "x8F5xyUWy9e",
+      "92"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "10"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "103"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "12"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "131"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "132"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "133"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "139"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "142"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "149"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "16"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "161"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "166"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "169"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "175"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "185"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "29"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "31"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "32"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "40"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "51"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "56"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "57"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "59"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "60"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "62"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "76"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "81"
+    ],
+    [
+      "zsNo4HB9uLZ",
+      "86"
+    ]
+  ],
+  "dataset_content_sha256": [
+    {
+      "file": "2azQ1b91cZZ.json.gz",
+      "sha256": "7fa5fbe963fc36e14db59592ca1579b6d0844b69ca2e2452b549c47b2201d780"
+    },
+    {
+      "file": "8194nk5LbLH.json.gz",
+      "sha256": "30c04c546ddb03b21bc6011a86a57a87496de7035fd155ee0aa1eaffeec2631b"
+    },
+    {
+      "file": "EU6Fwq7SyZv.json.gz",
+      "sha256": "19d678fdc12388f0f1971bcf11c519c87ac641d3e1c00370de94406e6a4d7695"
+    },
+    {
+      "file": "QUCTc6BB5sX.json.gz",
+      "sha256": "c61ed9eabd65dc1444f469ecc529975f2a527e2e002abbf173895c8dcf5d70fd"
+    },
+    {
+      "file": "TbHJrupSAjP.json.gz",
+      "sha256": "a2da1ffb981b18f0071862817f8d0d5c0782d7052da5512b76f28b7d9dfe7e6a"
+    },
+    {
+      "file": "X7HyMhZNoso.json.gz",
+      "sha256": "1d7fe6acfb60f480a8d173a08b77b3a52c8a94a42f30fedcafbc8d5f805251e7"
+    },
+    {
+      "file": "Z6MFQCViBuw.json.gz",
+      "sha256": "90118f6e7f86fe17e006af79eb5f70605130f5c92267378f87296cac22b7f1b3"
+    },
+    {
+      "file": "oLBMNvg9in8.json.gz",
+      "sha256": "a96b580a3d924206c07c91f8ebcbdbe4464c3fffd642ad3e2636a31d942e50e9"
+    },
+    {
+      "file": "pLe4wQe7qrG.json.gz",
+      "sha256": "81ce2b4fc4dacf9e90e8d36c89530039f4b2068fb2b9f2d272c16696384cd029"
+    },
+    {
+      "file": "x8F5xyUWy9e.json.gz",
+      "sha256": "5977d9f031fb41bab1122bd6445784dc415f3519d8af656692df18f86b5e638a"
+    },
+    {
+      "file": "zsNo4HB9uLZ.json.gz",
+      "sha256": "d31fe586cbf94c2611f6928b96cf49441adf42e096b8341f01fde16d51c411c1"
+    }
+  ],
+  "scene_counts": {
+    "2azQ1b91cZZ": 6,
+    "8194nk5LbLH": 7,
+    "EU6Fwq7SyZv": 2,
+    "QUCTc6BB5sX": 3,
+    "TbHJrupSAjP": 5,
+    "X7HyMhZNoso": 2,
+    "Z6MFQCViBuw": 6,
+    "oLBMNvg9in8": 5,
+    "pLe4wQe7qrG": 5,
+    "x8F5xyUWy9e": 6,
+    "zsNo4HB9uLZ": 3
+  },
+  "category_counts": {
+    "cabinet": 4,
+    "chair": 9,
+    "chest_of_drawers": 1,
+    "clothes": 1,
+    "counter": 3,
+    "cushion": 3,
+    "picture": 6,
+    "plant": 2,
+    "seating": 3,
+    "shower": 2,
+    "sink": 1,
+    "stool": 1,
+    "table": 9,
+    "toilet": 1,
+    "towel": 4
+  },
+  "episodes": [
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "120",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "80",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "115",
+      "object_category": "towel"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "63",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "171",
+      "object_category": "stool"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "76",
+      "object_category": "cabinet"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "174",
+      "object_category": "plant"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "184",
+      "object_category": "seating"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "134",
+      "object_category": "shower"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "25",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "32",
+      "object_category": "cabinet"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "181",
+      "object_category": "toilet"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "121",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "150",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "96",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "178",
+      "object_category": "seating"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "75",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "197",
+      "object_category": "clothes"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "41",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "68",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "98",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "102",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "183",
+      "object_category": "counter"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "14",
+      "object_category": "cabinet"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "41",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "104",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "138",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "59",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "132",
+      "object_category": "plant"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "15",
+      "object_category": "shower"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "183",
+      "object_category": "sink"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "8",
+      "object_category": "chest_of_drawers"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "23",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "79",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "184",
+      "object_category": "seating"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "91",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "64",
+      "object_category": "towel"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "157",
+      "object_category": "counter"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "128",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "97",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "32",
+      "object_category": "towel"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "80",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "140",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "2",
+      "object_category": "counter"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "145",
+      "object_category": "towel"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "82",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "85",
+      "object_category": "cabinet"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "86",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "43",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "45",
+      "object_category": "picture"
+    }
+  ]
+}

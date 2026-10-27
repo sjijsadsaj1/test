@@ -8,8 +8,10 @@ videos
 # experiments/, but never commit generated media, logs, or run directories.
 logs/
 experiments/runs/
+experiments/upstream_baseline/
 experiments/**/results/
 experiments/avic_bridge/runs/
+experiments/diagnostics/
 
 __pycache__/
 *.py[cod]
@@ -41,9 +43,16 @@ habitat-lab
 *.bag
 *.log
 *.pid
+*.o
+*.so
+*.a
+/core
+/core.[0-9]*
 
 # Machine-local runtime configuration. The example is safe to commit.
 config/avic.env
+config/image_glm.env
+.runtime/
 .env
 .env.*
 !.env.example
@@ -55,3 +64,5 @@ config/avic.env
 *.par
 bag
 wandb
+
+config/text_frontier.env

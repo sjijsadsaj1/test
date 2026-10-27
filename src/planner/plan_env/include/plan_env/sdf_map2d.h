@@ -73,6 +73,7 @@ public:
 
   // Map processing functions
   void updateESDFMap();
+  MapROS* observationInterface() { return map_ros_.get(); }
 
   // Map property accessors
   void getRegion(Eigen::Vector2d& ori, Eigen::Vector2d& size);

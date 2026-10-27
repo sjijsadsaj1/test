@@ -1,0 +1,4 @@
+{
+  "purpose": "Diagnostic cabinet task with historical grounded-consistent prediction; NOT an unbiased evaluation.",
+  "episodes": [{"scene_key": "2azQ1b91cZZ", "episode_id": "30", "object_category": "cabinet"}]
+}

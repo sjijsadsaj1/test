@@ -137,6 +137,28 @@ void MapROS::visCallback(const ros::TimerEvent& e)
   vis_timer_.start();
 }
 
+void MapROS::commitObservation(const sensor_msgs::Image& depth, const nav_msgs::Odometry& pose,
+    const plan_env::MultipleMasksWithConfidence& detections, double itm, bool initial)
+{
+  // The simulator owns a single complete frame transaction. Stop asynchronous
+  // writers; single-threaded ros::spin prevents timers interleaving this commit.
+  depth_sub_->unsubscribe();
+  pose_sub_->unsubscribe();
+  detected_object_cloud_sub_.shutdown();
+  itm_score_sub_.shutdown();
+  esdf_timer_.stop();
+  itm_score_ = itm;
+  depthPoseCallback(boost::make_shared<sensor_msgs::Image>(depth),
+      boost::make_shared<nav_msgs::Odometry>(pose));
+  if (!initial)
+    detectedObjectCloudCallback(
+        boost::make_shared<plan_env::MultipleMasksWithConfidence>(detections));
+  if (esdf_need_update_) {
+    map_->updateESDFMap();
+    esdf_need_update_ = false;
+  }
+}
+
 void MapROS::itmScoreCallback(const std_msgs::Float64ConstPtr& msg)
 {
   itm_score_ = msg->data;

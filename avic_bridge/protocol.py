@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, Iterable, List
 
 
 SCHEMA_VERSION = "1.4"
+CURRENT_ROUTE_CONTRACT = "current_pose_astar_prefix_v1_20260915"
+GROUNDED_SCORE_CONTRACT = "grounded_view_delta_v2_20260915"
+IMAGE_GLM_CONTRACT = "image_glm_single_view_v1"
 
 ACTION_ID_TO_NAME = {
     0: "stop",
@@ -39,6 +43,32 @@ def make_candidate_plan(plan_id: str, action_ids: Iterable[int]) -> Dict[str, An
         "plan_id": str(plan_id),
         "actions": [action_dict(action_id) for action_id in actions],
     }
+
+
+def validate_current_route_bindings(payload, plans):
+    """Reject mixed observation/route epochs before spending GPU work."""
+    if payload.get("navigation", {}).get("route_contract") != CURRENT_ROUTE_CONTRACT:
+        raise ProtocolError("grounded_delta requires the current-pose route contract")
+    step = payload.get("episode", {}).get("step_index")
+    image = payload.get("observation", {}).get("rgb_jpeg_b64")
+    pitch = payload.get("camera", {}).get("pitch_rad")
+    if type(step) is not int or not image or not isinstance(pitch, (int, float)) or not math.isfinite(pitch):
+        raise ProtocolError("invalid current observation epoch/image/pitch")
+    for plan in plans:
+        anchor = plan.get("frontier_anchor", {})
+        actions = [a["id"] for a in plan["actions"]]
+        minimum = plan.get("min_prefix_length")
+        if (plan.get("route_contract") != CURRENT_ROUTE_CONTRACT or
+                anchor.get("binding_source") != "current_observation" or
+                anchor.get("step_index") != step or anchor.get("rgb_jpeg_b64") != image or
+                anchor.get("camera_pitch_rad") != pitch or
+                actions != plan.get("source_frontier", {}).get("path_action_prefix") or
+                type(minimum) is not int or not (1 if payload.get('score_policy',{}).get('mode')=='image_glm' else 2) <= minimum <= len(actions)):
+            raise ProtocolError("mismatched current observation / A* route: " + str(plan.get("plan_id")))
+        for key in ("robot_x", "robot_y", "robot_yaw_rad", "camera_pitch_rad"):
+            value = anchor.get(key)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                raise ProtocolError("invalid current route pose: " + key)
 
 
 def validate_request(payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -121,6 +151,8 @@ def validate_request(payload: Dict[str, Any]) -> Dict[str, Any]:
             ):
                 if not isinstance(anchor.get(key), (int, float)):
                     raise ProtocolError("frontier_anchor.%s must be numeric" % key)
+    if payload.get("score_policy", {}).get("mode") in ("grounded_delta", "image_glm"):
+        validate_current_route_bindings(payload, plans)
     return payload
 
 

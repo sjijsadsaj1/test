@@ -1,0 +1,19 @@
+# One complete simulator observation. Retransmitting the same episode/step is idempotent.
+string episode
+uint32 step
+int32 executed_action
+float64 itm_score
+float64 confidence_threshold
+sensor_msgs/Image depth
+nav_msgs/Odometry camera_pose
+nav_msgs/Odometry robot_pose
+plan_env/MultipleMasksWithConfidence detections
+---
+bool accepted
+string reason
+string episode
+uint32 step
+int32 action
+int32 final_state
+int32 exploration_result
+std_msgs/Float32MultiArray frontiers

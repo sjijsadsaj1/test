@@ -1,0 +1,18 @@
+{
+  "name": "mp3d_pure_apex_failure_cases5_20261006",
+  "dataset": "mp3d",
+  "split": "val",
+  "criteria": {
+    "sample_size": 5,
+    "method": "historical failure representatives, not a random SR benchmark",
+    "episode_id_semantics": "Habitat runtime per-scene array index, NOT raw JSON episode_id",
+    "source_run": "paired50_mp3d_seed20260919/20260919_141221_314606"
+  },
+  "episodes": [
+    {"scene_key": "Z6MFQCViBuw", "episode_id": "97", "object_category": "chair"},
+    {"scene_key": "TbHJrupSAjP", "episode_id": "181", "object_category": "toilet"},
+    {"scene_key": "oLBMNvg9in8", "episode_id": "79", "object_category": "picture"},
+    {"scene_key": "Z6MFQCViBuw", "episode_id": "98", "object_category": "chair"},
+    {"scene_key": "oLBMNvg9in8", "episode_id": "183", "object_category": "sink"}
+  ]
+}

@@ -6,7 +6,48 @@ from avic_bridge.service import (
     SVCQwenBackend,
     _last_json_object,
     align_frontier_scores,
+    verifier_frame_budget,
+    validate_evidence,
 )
+
+
+def grounded_fields():
+    return dict(anchor_cue="visible bathtub edge", new_cue="bathroom continuation",
+                supported_by_real_anchor=True, adds_new_information=True,
+                target_only_in_imagination=False, support_frame_orders=[1])
+
+
+class GroundedEvidenceTests(unittest.TestCase):
+    def evaluation(self, **overrides):
+        return dict(grounded_fields(), reliability=0.8, evidence_gain=0.5,
+                    semantic_relation="related bathroom", reason="consistent", **overrides)
+
+    def test_grounded_single_frame_and_multiframe(self):
+        value = self.evaluation()
+        self.assertEqual(validate_evidence(value, [{"order": 1}])[:2], (True, True))
+        self.assertEqual(validate_evidence(value, [{"order": 1}, {"order": 2}])[:2], (True, False))
+        value["support_frame_orders"] = [1, 2]
+        self.assertEqual(validate_evidence(value, [{"order": 1}, {"order": 2}])[:2], (True, True))
+
+    def test_contradiction_blocks_positive_numbers(self):
+        value = self.evaluation()
+        value["reason"] = "No new target-directed evidence beyond the anchor."
+        self.assertEqual(validate_evidence(value, [{"order": 1}])[:2], (True, False))
+
+    def test_missing_nan_invalid_frame_and_boolean_are_transient(self):
+        for key, value in (("evidence_gain", float("nan")), ("reliability", True),
+                           ("support_frame_orders", [9]), ("adds_new_information", "true")):
+            record = self.evaluation()
+            record[key] = value
+            self.assertFalse(validate_evidence(record, [{"order": 1}])[0])
+        self.assertFalse(validate_evidence({}, [{"order": 1}])[0])
+
+    def test_unanchored_invented_or_redundant_evidence_rejected(self):
+        for key, value in (("supported_by_real_anchor", False), ("adds_new_information", False),
+                           ("target_only_in_imagination", True), ("anchor_cue", "")):
+            record = self.evaluation()
+            record[key] = value
+            self.assertEqual(validate_evidence(record, [{"order": 1}])[:2], (True, False))
 
 
 def payload(frontiers, active=True, imagination_ranks=None):
@@ -272,6 +313,7 @@ class FakeHorizonClient:
                     "evidence_gain": 0.5,
                     "semantic_relation": "plausible related-room continuation",
                     "reason": "consistent and informative",
+                    **grounded_fields(),
                 }
                 for item in candidates
             ]
@@ -313,6 +355,12 @@ class FakeITM:
 
 
 class HorizonSelectorTests(unittest.TestCase):
+    def test_joint_verifier_frame_budget_matches_qwen_image_limit(self):
+        self.assertEqual(verifier_frame_budget(3, 12), 3)
+        self.assertEqual(verifier_frame_budget(2, 12), 5)
+        with self.assertRaises(RuntimeError):
+            verifier_frame_budget(3, 5)
+
     def test_one_batched_request_selects_bound_route_prefixes(self):
         backend = SVCQwenBackend()
         backend._qwen = FakeHorizonClient(
@@ -391,6 +439,52 @@ class HorizonSelectorTests(unittest.TestCase):
         self.assertNotIn("frontier_0", records)
         self.assertAlmostEqual(records["frontier_1"]["imagination_bonus"], 0.008)
 
+    def test_three_candidates_receive_safe_per_plan_frame_cap(self):
+        backend = SVCQwenBackend(max_images_per_prompt=12)
+        backend._qwen = FakeHorizonClient(
+            [
+                {
+                    "plan_id": "frontier_%d" % rank,
+                    "prefix_length": 1,
+                    "reason": "short",
+                }
+                for rank in range(3)
+            ]
+        )
+        backend._svc = FakeSVC()
+        backend._itm = FakeITM()
+        result = backend.decide(
+            payload(
+                [
+                    frontier(0, 0.20, 1.0, -0.8, 2),
+                    frontier(1, 0.205, 1.1, 0.0, 1),
+                    frontier(2, 0.21, 1.2, 0.8, 3),
+                ]
+            )
+        )
+        self.assertEqual(len(backend._svc.generated), 3)
+        self.assertTrue(
+            all(plan["max_rerank_frames"] == 3 for plan in backend._svc.generated)
+        )
+        self.assertEqual(
+            result["workload"],
+            {
+                "qwen_horizon_requests": 1,
+                "qwen_verifier_requests": 1,
+                "svc_videos": 3,
+                "svc_reused_videos": 0,
+                "svc_candidate_plans": 3,
+                "blip_frame_scores": 3,
+            },
+        )
+        self.assertEqual(
+            set(result["stage_latencies_ms"]),
+            {"qwen_horizon", "svc_generation", "blip_scoring", "qwen_verifier"},
+        )
+        self.assertTrue(
+            all(value >= 0.0 for value in result["stage_latencies_ms"].values())
+        )
+
     def test_identical_imagined_trajectories_receive_no_bonus(self):
         backend = SVCQwenBackend()
         backend._qwen = FakeHorizonClient(
@@ -432,6 +526,7 @@ class HorizonSelectorTests(unittest.TestCase):
                     "evidence_gain": 0.1,
                     "semantic_relation": "no new evidence",
                     "reason": "continuation is redundant",
+                    **grounded_fields(),
                 }
             ],
         )
@@ -444,6 +539,26 @@ class HorizonSelectorTests(unittest.TestCase):
         self.assertEqual(record["imagination_bonus"], 0.0)
         self.assertEqual(record["decision_semantic_score"], 0.20)
         self.assertTrue(record["imagination_evaluated"])
+
+    def test_verifier_failure_is_marked_transient(self):
+        class FailingVerifier(FakeHorizonClient):
+            def evaluate_frontier_sequences(self, _payload, candidates):
+                self.verifier_calls.append(
+                    [str(item["plan_id"]) for item in candidates]
+                )
+                raise TimeoutError("temporary verifier timeout")
+
+        backend = SVCQwenBackend()
+        backend._qwen = FailingVerifier(
+            [{"plan_id": "frontier_0", "prefix_length": 1, "reason": "short"}]
+        )
+        backend._svc = FakeSVC()
+        backend._itm = FakeITM()
+        result = backend.decide(payload([frontier(0, 0.20, 1.0, -0.8, 2)]))
+        record = result["candidate_scores"][0]
+        self.assertFalse(record["imagination_evaluated"])
+        self.assertEqual(record["imagination_bonus"], 0.0)
+        self.assertIn("temporary verifier timeout", record["verifier_reason"])
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@
 
     <!-- Real-world mode flag (default to false for simulation) -->
     <arg name="is_real_world_" default="false"/>
+    <arg name="tsp_dir_" default="$(find lkh_mtsp_solver)/resource"/>
 
     <!-- main node -->
     <node pkg="exploration_manager" name="exploration_node" type="exploration_node" output="screen">
@@ -25,6 +26,7 @@
 
         <!-- FSM mode selection -->
         <param name="is_real_world" value="$(arg is_real_world_)" type="bool"/>
+        <param name="exploration/stagnation_recovery" value="$(optenv APEXNAV_STAGNATION_RECOVERY false)" type="bool"/>
         
         <!-- Mapping -->
         <!-- ray_mode = 0: penetrate ; ray_mode = 1: non-penetrate -->
@@ -65,9 +67,11 @@
         <param name="exploration/max_to_mean_threshold" value="1.10" type="double"/>
         <param name="exploration/max_to_mean_percentage" value="0.90" type="double"/>
         <param name="exploration/avic_top_k" value="3" type="int"/>
+        <param name="exploration/target_confirmation" value="$(optenv APEXNAV_TARGET_CONFIRMATION true)" type="bool"/>
+        <param name="exploration/avic_route_commit_steps" value="$(optenv APEXNAV_AVIC_ROUTE_COMMIT_STEPS 6)" type="int"/>
         <param name="exploration/avic_score_match_tolerance" value="0.10" type="double"/>
         <param name="exploration/avic_observation_evidence_threshold" value="0.55" type="double"/>
-        <param name="exploration/tsp_dir" value="$(find lkh_mtsp_solver)/resource" type="string"/>
+        <param name="exploration/tsp_dir" value="$(arg tsp_dir_)" type="string"/>
 
         <param name="frontier/cluster_min" value="2" type="int"/>
         <param name="frontier/cluster_size_xy" value="0.65" type="double"/>
@@ -93,6 +97,6 @@
 
     <!-- ATSP solver -->
     <node pkg="lkh_mtsp_solver" name="tsp_solver" type="tsp_node" output="log">
-        <param name="exploration/tsp_dir" value="$(find lkh_mtsp_solver)/resource" type="string"/>
+        <param name="exploration/tsp_dir" value="$(arg tsp_dir_)" type="string"/>
     </node>
 </launch>

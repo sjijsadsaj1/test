@@ -90,7 +90,8 @@ int Astar2D::astarSearch(const Eigen::Vector2d& start_pt, const Eigen::Vector2d&
     }
 
     // Early termination if time up
-    if ((ros::Time::now() - t1).toSec() > max_time) {
+    if (expansion_budget_ > 0 ? iter_num_ >= expansion_budget_ :
+        (ros::Time::now() - t1).toSec() > max_time) {
       early_terminate_cost_ = cur_node->g_score + getDiagHeu(cur_node->position, end_pt);
       // ROS_WARN("Astar Long Time");
       return NO_PATH;

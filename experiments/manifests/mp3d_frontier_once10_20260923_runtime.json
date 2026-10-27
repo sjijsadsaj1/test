@@ -1,0 +1,125 @@
+{
+  "name": "mp3d_frontier_once10_20260923",
+  "dataset": "mp3d",
+  "split": "val",
+  "selection_version": 1,
+  "purpose": "exploratory ablation only, not confirmatory SR evidence",
+  "criteria": {
+    "contract": "frontier_once_spatial_q25_half_v1_20260923",
+    "identity_radius_m": 0.75,
+    "target_count": 50,
+    "count_scope": "historical exported top3 spatial tracks; NOT full-map unique frontier count",
+    "rule": "nearest to 50 in [40,60], tie by scene and episode; no outcome selection",
+    "source_log": "logs/one_click/20260917_151225_1866823/evaluation.log",
+    "source_log_sha256": "ed796061edcc16772dc886d6bd385b279d8291a980fe131150fcb797e679fc21",
+    "source_manifest_sha256": "d5571684437726600d8d1c7e52eea6e899a81f00d905e219637151dd70729908"
+  },
+  "dataset_content_sha256": [
+    {
+      "file": "2azQ1b91cZZ.json.gz",
+      "sha256": "7fa5fbe963fc36e14db59592ca1579b6d0844b69ca2e2452b549c47b2201d780"
+    },
+    {
+      "file": "8194nk5LbLH.json.gz",
+      "sha256": "30c04c546ddb03b21bc6011a86a57a87496de7035fd155ee0aa1eaffeec2631b"
+    },
+    {
+      "file": "EU6Fwq7SyZv.json.gz",
+      "sha256": "19d678fdc12388f0f1971bcf11c519c87ac641d3e1c00370de94406e6a4d7695"
+    },
+    {
+      "file": "QUCTc6BB5sX.json.gz",
+      "sha256": "c61ed9eabd65dc1444f469ecc529975f2a527e2e002abbf173895c8dcf5d70fd"
+    },
+    {
+      "file": "TbHJrupSAjP.json.gz",
+      "sha256": "a2da1ffb981b18f0071862817f8d0d5c0782d7052da5512b76f28b7d9dfe7e6a"
+    },
+    {
+      "file": "X7HyMhZNoso.json.gz",
+      "sha256": "1d7fe6acfb60f480a8d173a08b77b3a52c8a94a42f30fedcafbc8d5f805251e7"
+    },
+    {
+      "file": "Z6MFQCViBuw.json.gz",
+      "sha256": "90118f6e7f86fe17e006af79eb5f70605130f5c92267378f87296cac22b7f1b3"
+    },
+    {
+      "file": "oLBMNvg9in8.json.gz",
+      "sha256": "a96b580a3d924206c07c91f8ebcbdbe4464c3fffd642ad3e2636a31d942e50e9"
+    },
+    {
+      "file": "pLe4wQe7qrG.json.gz",
+      "sha256": "81ce2b4fc4dacf9e90e8d36c89530039f4b2068fb2b9f2d272c16696384cd029"
+    },
+    {
+      "file": "x8F5xyUWy9e.json.gz",
+      "sha256": "5977d9f031fb41bab1122bd6445784dc415f3519d8af656692df18f86b5e638a"
+    },
+    {
+      "file": "zsNo4HB9uLZ.json.gz",
+      "sha256": "d31fe586cbf94c2611f6928b96cf49441adf42e096b8341f01fde16d51c411c1"
+    }
+  ],
+  "episodes": [
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "55",
+      "object_category": "sofa",
+      "historical_visible_frontier_tracks": 49
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "163",
+      "object_category": "table",
+      "historical_visible_frontier_tracks": 49
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "107",
+      "object_category": "picture",
+      "historical_visible_frontier_tracks": 49
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "87",
+      "object_category": "chair",
+      "historical_visible_frontier_tracks": 48
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "45",
+      "object_category": "picture",
+      "historical_visible_frontier_tracks": 52
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "35",
+      "object_category": "sink",
+      "historical_visible_frontier_tracks": 48
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "62",
+      "object_category": "cushion",
+      "historical_visible_frontier_tracks": 47
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "186",
+      "object_category": "towel",
+      "historical_visible_frontier_tracks": 54
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "190",
+      "object_category": "fireplace",
+      "historical_visible_frontier_tracks": 55
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "92",
+      "object_category": "seating",
+      "historical_visible_frontier_tracks": 55
+    }
+  ]
+}

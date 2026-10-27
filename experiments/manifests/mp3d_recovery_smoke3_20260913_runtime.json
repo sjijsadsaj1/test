@@ -1,0 +1,8 @@
+{
+  "description": "Diagnostic only: historical rescue cases, not an unbiased SR benchmark. Runtime per-scene IDs.",
+  "episodes": [
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "18", "object_category": "cabinet"},
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "30", "object_category": "cabinet"},
+    {"scene_key": "2azQ1b91cZZ", "episode_id": "165", "object_category": "toilet"}
+  ]
+}

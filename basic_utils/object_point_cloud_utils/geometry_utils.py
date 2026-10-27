@@ -67,6 +67,19 @@ def xyz_yaw_to_tf_matrix(xyz: np.ndarray, yaw: float) -> np.ndarray:
     return transformation_matrix
 
 
+def xyz_yaw_pitch_to_tf_matrix(xyz: np.ndarray, yaw: float, pitch: float) -> np.ndarray:
+    """Match publish_camera_odom for body coordinates [forward, left, up].
+
+    Positive Habitat look-up pitch lifts the forward axis. Intrinsics are
+    deliberately unchanged so object and occupancy projection still agree.
+    """
+    transform = xyz_yaw_to_tf_matrix(xyz, yaw)
+    cp, sp = np.cos(pitch), np.sin(pitch)
+    pitch_rotation = np.array([[cp, 0., -sp], [0., 1., 0.], [sp, 0., cp]])
+    transform[:3, :3] = transform[:3, :3] @ pitch_rotation
+    return transform
+
+
 def too_offset(mask: np.ndarray) -> bool:
     """
     Check if object mask is too close to image edges

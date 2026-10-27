@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any, Dict, Optional
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -41,5 +42,20 @@ class AvicHTTPClient:
         return self._json_request("/health")
 
     def decide(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        archive=os.environ.get('APEXNAV_SCORE_RESPONSE_ARCHIVE')
+        replay=os.environ.get('APEXNAV_SCORE_RESPONSE_REPLAY')
+        store=None
+        if archive or replay:
+            from .response_replay import ResponseArchive
+            if not hasattr(self,'_response_archive'):
+                self._response_archive=ResponseArchive(archive,replay)
+            store=self._response_archive
+            frozen=store.lookup(payload)
+            if frozen is not None:return frozen
         response = self._json_request("/v1/decide", payload)
-        return validate_response(response, payload["request_id"])
+        response=validate_response(response, payload["request_id"])
+        if store:
+            try:store.save(payload,response)
+            except (OSError,ValueError,TypeError) as exc:
+                store.log('ARCHIVE_ERROR',reason=type(exc).__name__,request_id=payload['request_id'])
+        return response

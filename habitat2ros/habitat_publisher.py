@@ -35,7 +35,7 @@ class ROSPublisher:
         self.rgb_pub = rospy.Publisher("/habitat/camera_rgb", Image, queue_size=10)
         self.odom_pub = rospy.Publisher("/habitat/odom", Odometry, queue_size=10)
         self.pose_pub = rospy.Publisher("/habitat/sensor_pose", Odometry, queue_size=10)
-    def publish_depth(self, ros_time, depth_image):
+    def publish_depth(self, ros_time, depth_image, publish=True):
         depth_image = np.asarray(depth_image, dtype=np.float32)
         if depth_image.ndim == 3 and depth_image.shape[-1] == 1:
             depth_image = depth_image[..., 0]
@@ -50,7 +50,9 @@ class ROSPublisher:
         depth_msg.data = depth_image.tobytes()
         depth_msg.header.stamp = ros_time
         depth_msg.header.frame_id = "world"
-        self.depth_pub.publish(depth_msg)
+        if publish:
+            self.depth_pub.publish(depth_msg)
+        return depth_msg
 
     def publish_rgb(self, ros_time, rgb_image):
         rgb_image = np.ascontiguousarray(np.asarray(rgb_image, dtype=np.uint8))
@@ -64,7 +66,7 @@ class ROSPublisher:
         rgb_msg.header.frame_id = "world"
         self.rgb_pub.publish(rgb_msg)
 
-    def publish_robot_odom(self, ros_time, gps, compass):
+    def publish_robot_odom(self, ros_time, gps, compass, publish=True):
         copy_compass = deepcopy(compass)
         odom = Odometry()
         odom.header.stamp = ros_time
@@ -74,9 +76,11 @@ class ROSPublisher:
             position=Point(-gps[2], -gps[0], gps[1]),
             orientation=Quaternion(*quaternion_from_euler(0, 0, copy_compass)),
         )
-        self.odom_pub.publish(odom)
+        if publish:
+            self.odom_pub.publish(odom)
+        return odom
 
-    def publish_camera_odom(self, ros_time, gps, compass, pitch):
+    def publish_camera_odom(self, ros_time, gps, compass, pitch, publish=True):
         copy_compass = deepcopy(compass)
         copy_pitch = deepcopy(pitch)
         sensor_pose = Odometry()
@@ -91,7 +95,9 @@ class ROSPublisher:
                 )
             ),
         )
-        self.pose_pub.publish(sensor_pose)
+        if publish:
+            self.pose_pub.publish(sensor_pose)
+        return sensor_pose
 
     def habitat_publish_ros_topic(self, observations):
         depth_image = observations["depth"]

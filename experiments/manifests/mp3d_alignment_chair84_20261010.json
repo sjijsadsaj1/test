@@ -1,0 +1,11 @@
+{
+  "description": "Alignment diagnostic, one unchanged episode entry extracted from mp3d_sr_dev100_seed20260911_runtime.json; current experimental ApexNav, not frozen 1.0 or upstream baseline.",
+  "source_manifest": "mp3d_sr_dev100_seed20260911_runtime.json",
+  "episodes": [
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "84",
+      "object_category": "chair"
+    }
+  ]
+}

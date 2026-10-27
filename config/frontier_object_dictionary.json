@@ -1,0 +1,5 @@
+{
+  "version": "mp3d_categories_v1",
+  "source": "data/datasets/objectnav/mp3d/v1/val/val.json.gz category_to_task_category_id (category names only; no episode/goal statistics)",
+  "objects": ["chair", "table", "picture", "cabinet", "cushion", "sofa", "bed", "chest_of_drawers", "plant", "sink", "toilet", "stool", "towel", "tv_monitor", "shower", "bathtub", "counter", "fireplace", "gym_equipment", "seating", "clothes"]
+}

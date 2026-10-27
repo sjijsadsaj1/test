@@ -1,0 +1,813 @@
+{
+  "name": "mp3d_sr_dev100_seed20260911_runtime",
+  "dataset": "mp3d",
+  "split": "val",
+  "selection_version": 1,
+  "purpose": "fixed SR development set; not an untouched final test set after tuning",
+  "criteria": {
+    "random_seed": 20260911,
+    "sample_size": 100,
+    "method": "uniform random sample without replacement; no outcome-based selection",
+    "pool_order": "content filename sorted, then per-scene runtime episode index",
+    "selection_order": "random.Random(seed).sample output order; keep this order in every run",
+    "source_episode_count": 2195,
+    "excluded_unique_episode_count": 195,
+    "eligible_episode_count": 2000,
+    "excluded_manifests": [
+      {
+        "path": "experiments/manifests/mp3d_random50_seed20260906_habitat.json",
+        "sha256": "4e6f4b2361dde31233020f868b360277db1e766b1c6ba01eac37e95d3d5eed9a"
+      },
+      {
+        "path": "experiments/manifests/mp3d_random50_seed20260907_disjoint_runtime.json",
+        "sha256": "40ff9893567c751304d9df7a1bbda947fee64790df30c1c3c3e4d2a42f3269e5"
+      },
+      {
+        "path": "experiments/manifests/mp3d_random50_seed20260909_disjoint_runtime.json",
+        "sha256": "08cb51659c369826c51dad9f31fd73d10e8a1bfa23fa0d4966df584ba050b3d7"
+      }
+    ],
+    "excluded_first50_scene_episode_keys": [
+      [
+        "2azQ1b91cZZ",
+        "0"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "1"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "10"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "11"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "12"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "13"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "14"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "15"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "16"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "17"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "18"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "19"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "2"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "20"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "21"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "22"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "23"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "24"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "25"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "26"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "27"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "28"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "29"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "3"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "30"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "31"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "32"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "33"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "34"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "35"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "36"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "37"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "38"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "39"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "4"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "40"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "41"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "42"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "43"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "44"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "45"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "46"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "47"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "48"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "49"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "5"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "6"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "7"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "8"
+      ],
+      [
+        "2azQ1b91cZZ",
+        "9"
+      ]
+    ],
+    "episode_id_semantics": "Habitat runtime per-scene array index, NOT raw JSON episode_id"
+  },
+  "dataset_content_sha256": [
+    {
+      "file": "2azQ1b91cZZ.json.gz",
+      "sha256": "7fa5fbe963fc36e14db59592ca1579b6d0844b69ca2e2452b549c47b2201d780"
+    },
+    {
+      "file": "8194nk5LbLH.json.gz",
+      "sha256": "30c04c546ddb03b21bc6011a86a57a87496de7035fd155ee0aa1eaffeec2631b"
+    },
+    {
+      "file": "EU6Fwq7SyZv.json.gz",
+      "sha256": "19d678fdc12388f0f1971bcf11c519c87ac641d3e1c00370de94406e6a4d7695"
+    },
+    {
+      "file": "QUCTc6BB5sX.json.gz",
+      "sha256": "c61ed9eabd65dc1444f469ecc529975f2a527e2e002abbf173895c8dcf5d70fd"
+    },
+    {
+      "file": "TbHJrupSAjP.json.gz",
+      "sha256": "a2da1ffb981b18f0071862817f8d0d5c0782d7052da5512b76f28b7d9dfe7e6a"
+    },
+    {
+      "file": "X7HyMhZNoso.json.gz",
+      "sha256": "1d7fe6acfb60f480a8d173a08b77b3a52c8a94a42f30fedcafbc8d5f805251e7"
+    },
+    {
+      "file": "Z6MFQCViBuw.json.gz",
+      "sha256": "90118f6e7f86fe17e006af79eb5f70605130f5c92267378f87296cac22b7f1b3"
+    },
+    {
+      "file": "oLBMNvg9in8.json.gz",
+      "sha256": "a96b580a3d924206c07c91f8ebcbdbe4464c3fffd642ad3e2636a31d942e50e9"
+    },
+    {
+      "file": "pLe4wQe7qrG.json.gz",
+      "sha256": "81ce2b4fc4dacf9e90e8d36c89530039f4b2068fb2b9f2d272c16696384cd029"
+    },
+    {
+      "file": "x8F5xyUWy9e.json.gz",
+      "sha256": "5977d9f031fb41bab1122bd6445784dc415f3519d8af656692df18f86b5e638a"
+    },
+    {
+      "file": "zsNo4HB9uLZ.json.gz",
+      "sha256": "d31fe586cbf94c2611f6928b96cf49441adf42e096b8341f01fde16d51c411c1"
+    }
+  ],
+  "scene_counts": {
+    "2azQ1b91cZZ": 6,
+    "8194nk5LbLH": 6,
+    "EU6Fwq7SyZv": 9,
+    "QUCTc6BB5sX": 6,
+    "TbHJrupSAjP": 8,
+    "X7HyMhZNoso": 10,
+    "Z6MFQCViBuw": 13,
+    "oLBMNvg9in8": 15,
+    "pLe4wQe7qrG": 10,
+    "x8F5xyUWy9e": 7,
+    "zsNo4HB9uLZ": 10
+  },
+  "category_counts": {
+    "bathtub": 2,
+    "cabinet": 7,
+    "chair": 20,
+    "chest_of_drawers": 5,
+    "counter": 2,
+    "cushion": 11,
+    "fireplace": 3,
+    "picture": 11,
+    "plant": 6,
+    "seating": 3,
+    "shower": 4,
+    "sink": 2,
+    "sofa": 3,
+    "stool": 3,
+    "table": 16,
+    "towel": 2
+  },
+  "episodes": [
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "27",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "185",
+      "object_category": "seating"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "55",
+      "object_category": "sofa"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "85",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "50",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "12",
+      "object_category": "cabinet"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "55",
+      "object_category": "counter"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "110",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "76",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "35",
+      "object_category": "sink"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "171",
+      "object_category": "plant"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "48",
+      "object_category": "sink"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "162",
+      "object_category": "chest_of_drawers"
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "164",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "138",
+      "object_category": "cabinet"
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "9",
+      "object_category": "chest_of_drawers"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "152",
+      "object_category": "stool"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "110",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "129",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "45",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "108",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "172",
+      "object_category": "plant"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "45",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "22",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "88",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "120",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "163",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "38",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "91",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "12",
+      "object_category": "plant"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "133",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "174",
+      "object_category": "plant"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "131",
+      "object_category": "cabinet"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "159",
+      "object_category": "fireplace"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "19",
+      "object_category": "cabinet"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "70",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "64",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "48",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "190",
+      "object_category": "fireplace"
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "153",
+      "object_category": "cabinet"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "69",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "179",
+      "object_category": "chest_of_drawers"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "175",
+      "object_category": "bathtub"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "174",
+      "object_category": "shower"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "110",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "41",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "16",
+      "object_category": "plant"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "126",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "0",
+      "object_category": "cabinet"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "186",
+      "object_category": "towel"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "86",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "132",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "157",
+      "object_category": "stool"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "133",
+      "object_category": "shower"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "141",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "92",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "105",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "66",
+      "object_category": "bathtub"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "116",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "56",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "188",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "81",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "173",
+      "object_category": "towel"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "96",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "171",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "104",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "102",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "43",
+      "object_category": "chest_of_drawers"
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "59",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "87",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "140",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "3",
+      "object_category": "cabinet"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "20",
+      "object_category": "plant"
+    },
+    {
+      "scene_key": "2azQ1b91cZZ",
+      "episode_id": "191",
+      "object_category": "shower"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "84",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "121",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "102",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "40",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "118",
+      "object_category": "shower"
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "62",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "88",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "107",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "52",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "161",
+      "object_category": "fireplace"
+    },
+    {
+      "scene_key": "X7HyMhZNoso",
+      "episode_id": "103",
+      "object_category": "chest_of_drawers"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "104",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "114",
+      "object_category": "picture"
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "56",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "x8F5xyUWy9e",
+      "episode_id": "92",
+      "object_category": "seating"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "130",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "8194nk5LbLH",
+      "episode_id": "95",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "149",
+      "object_category": "cushion"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "60",
+      "object_category": "table"
+    },
+    {
+      "scene_key": "TbHJrupSAjP",
+      "episode_id": "52",
+      "object_category": "sofa"
+    },
+    {
+      "scene_key": "pLe4wQe7qrG",
+      "episode_id": "166",
+      "object_category": "seating"
+    },
+    {
+      "scene_key": "Z6MFQCViBuw",
+      "episode_id": "117",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "zsNo4HB9uLZ",
+      "episode_id": "161",
+      "object_category": "counter"
+    },
+    {
+      "scene_key": "oLBMNvg9in8",
+      "episode_id": "178",
+      "object_category": "sofa"
+    },
+    {
+      "scene_key": "QUCTc6BB5sX",
+      "episode_id": "15",
+      "object_category": "chair"
+    },
+    {
+      "scene_key": "EU6Fwq7SyZv",
+      "episode_id": "146",
+      "object_category": "stool"
+    }
+  ]
+}

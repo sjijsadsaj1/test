@@ -59,6 +59,8 @@ public:
   // Core interface functions
   void setMap(SDFMap2D* map);
   void init();
+  void commitObservation(const sensor_msgs::Image& depth, const nav_msgs::Odometry& pose,
+      const plan_env::MultipleMasksWithConfidence& detections, double itm, bool initial);
 
 private:
   // ROS callback functions

@@ -1,5 +1,9 @@
 import cv2
 import numpy as np
+import os
+import json
+from vlm.utils.target_aliases import detector_aliases, box_iou
+from vlm.utils.target_phrase_match import target_phrase_matches
 from vlm.coco_classes import COCO_CLASSES
 from vlm.detector.yolov7 import YOLOv7Client
 from vlm.segmentor.sam import MobileSAMClient
@@ -70,7 +74,13 @@ def get_object(right_label, img, cfg, similar_answer):
     label_list = []
     coco_label = []
     dino_label = []
-    right_label_list = list(map(str.strip, right_label.split('|')))
+    original_labels = list(map(str.strip, right_label.split('|')))
+    right_label_list = detector_aliases(right_label)
+    match_mode = os.environ.get('APEXNAV_TARGET_ALIASES', 'off')
+    alias_active = right_label_list != original_labels or (
+        match_mode in ('picture_phrase', 'picture_pose') and original_labels == ['picture', 'framed photograph'])
+    raw_dino=[]
+    target_boxes=[]
     # print(f"right_label_list: {right_label_list}")
     all_answer = right_label_list + similar_answer
     for label in all_answer:
@@ -111,10 +121,17 @@ def get_object(right_label, img, cfg, similar_answer):
         caption = ' '.join(f'{item}.  ' for item in dino_label)
         detections = dino_detector.predict(img, caption=caption, 
                                         box_threshold=cfg.groundingDINO.confidence_threshold_dino, text_threshold=cfg.groundingDINO.text_threshold)
-        for idx in range(len(detections.logits)):
+        raw_dino=[dict(phrase=p,score=float(s),box=b.tolist())
+                  for p,s,b in zip(detections.phrases,detections.logits,detections.boxes)]
+        indices=sorted(range(len(detections.logits)),key=lambda i:-float(detections.logits[i])) if alias_active else range(len(detections.logits))
+        for idx in indices:
             label_detected = detections.phrases[idx]
             score = detections.logits[idx].item()
-            if label_detected in right_label_list:
+            if target_phrase_matches(label_detected, right_label_list, match_mode):
+                box=detections.boxes[idx].tolist()
+                if alias_active and any(box_iou(box,other)>=.8 for other in target_boxes):
+                    continue  # Synonyms must not create multiple observations of one object in one frame.
+                target_boxes.append(box)
                 segmented_img, object_mask = get_segmentation(
                     segmented_img, idx, detections, img, label_detected, score, color=(255, 0, 0)
                 )
@@ -130,6 +147,10 @@ def get_object(right_label, img, cfg, similar_answer):
                 object_masks_list.append(object_mask)
                 label_list.append(list(all_answer).index(label_detected) - len(right_label_list)+1)
 
+    if os.environ.get('APEXNAV_PERCEPTION_AUDIT')=='1':
+        print('[TARGET_ALIAS_AUDIT] '+json.dumps(dict(original_label=right_label,aliases=right_label_list,match_mode=match_mode,
+              active=alias_active,raw_dino=raw_dino,accepted_labels=label_list,accepted_scores=score_list,
+              mask_pixels=[int(np.count_nonzero(m)) for m in object_masks_list])),flush=True)
     return segmented_img, score_list, object_masks_list, label_list
 
 def get_object_with_itm(label, img, cfg):
